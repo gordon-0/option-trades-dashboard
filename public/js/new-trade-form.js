@@ -15,8 +15,8 @@ class NewTradeForm {
         const today = new Date().toISOString().slice(0, 10);
 /*         this.tradeDate.value = today;
         this.expireDate.value = today;*/
-        this.tradeDate.value = "2025-08-21";
-        this.expireDate.value = "2025-08-21";
+        this.tradeDate.value = "2025-07-31";
+        this.expireDate.value = "2025-07-31";
         this.tradeTime.value = "";
     }
 

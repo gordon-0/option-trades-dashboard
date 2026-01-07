@@ -201,15 +201,10 @@ class TradeDashboard {
 
                 if (!t.treatAsLoss && t.optionPriceHighs?.length) {
 
-                    const highest = this.getHighestHighPrice(t.optionPriceHighs);
-
-                    if (
-                        highest.highDateTime &&
-                        highest.highDateTime.toDateString() ===
-                        t.tradeDateTime.toDateString()
-                    ) {
+                    if (!t.treatAsLoss && this.isSwingDayTrade(t)) {
                         stats.swingsDay++;
                     }
+
                 }
             }
 
@@ -234,10 +229,14 @@ class TradeDashboard {
         stats.weightedWinRatio = weightedWinRatio;
 
         /* ===== TIME STATS ===== */
-        stats.avgMs = this.calculateAvgTimeBetweenHighs(filteredTrades);
-        stats.avgHL = this.calculateAvgTimeBetweenHighLow(filteredTrades);
-        stats.medianMs = this.calculateMedianTimeBetweenHighs(filteredTrades);
-        stats.medianHL = this.calculateMedianTimeBetweenHighLow(filteredTrades);
+        const timeStats = this.calculateOptionHighTimeStats(filteredTrades);
+
+        stats.avgMs = timeStats.high.avg;
+        stats.medianMs = timeStats.high.median;
+
+        stats.avgHL = timeStats.highLow.avg;
+        stats.medianHL = timeStats.highLow.median;
+
 
         /* ===== DAY BREAKDOWNS ===== */
         stats.tradesByDay = this.countTradesByDay(filteredTrades);
@@ -307,34 +306,15 @@ class TradeDashboard {
     }
 
 
-
-
-
-
-
-
     filterByTradeType(trade, selectedTradeTypes = []) {
         if (!selectedTradeTypes.length) return true;
 
-        return selectedTradeTypes.some(type => {
-            if (type === "swing") return trade.tradeDateTime.getTime() !== trade.expireDateTime.getTime();
-            if (type === "swing-day") {
-                if (trade.tradeDateTime.toDateString() === trade.expireDateTime.toDateString()) return false;
-                if (!trade.optionPriceHighs?.length) return false;
+        const tradeTypes = this.getTradeTypes(trade);
 
-                const highest = this.getHighestHighPrice(trade.optionPriceHighs);
-
-                return (
-                    highest.highDateTime.toDateString() ===
-                    trade.tradeDateTime.toDateString()
-                );
-
-            }
-            if (type === "0dte") return trade.tradeDateTime.toDateString() === trade.expireDateTime.toDateString();
-            return false;
-        });
+        return selectedTradeTypes.some(type =>
+            tradeTypes.includes(type)
+        );
     }
-
 
     filterByDay(trade, selectedDays) {
         if (!selectedDays.length) return true;
@@ -403,6 +383,18 @@ class TradeDashboard {
         });
     }
 
+isSwingDayTrade(trade) {
+    if (!trade.optionPriceHighs?.length) return false;
+    if (!(trade.tradeDateTime instanceof Date)) return false;
+
+    const tradeDay = trade.tradeDateTime.toDateString();
+
+    return trade.optionPriceHighs.every(h =>
+        h.highDateTime instanceof Date &&
+        !isNaN(h.highDateTime) &&
+        h.highDateTime.toDateString() === tradeDay
+    );
+}
 
     sortHighsByDescending(highs) {
         return [...highs].sort((a, b) => b.price - a.price);
@@ -455,43 +447,54 @@ class TradeDashboard {
         return { dollars, percent };
     }
 
-    getHighTimeDiffs(trades, { useHighLow = false } = {}) {
-        return trades.reduce((diffs, trade) => {
-            const highs = this.getFilteredHighs(trade);
-            if (highs.length < 2) return diffs;
+    getOptionHighTimeDiffs(trades) {
+        return trades.reduce(
+            (acc, trade) => {
+                const highs = this.getFilteredHighs(trade);
+                if (highs.length < 2) return acc;
 
-            let times = useHighLow
-                ? highs
-                    .sort((a, b) => b.price - a.price)
-                    .slice(0, 2)
-                    .map(h => h.highDateTime)
-                : highs
+                // ---- High-to-high ----
+                const chronTimes = highs
                     .map(h => h.highDateTime)
                     .sort((a, b) => a - b);
 
+                for (let i = 1; i < chronTimes.length; i++) {
+                    acc.high.push(Math.abs(chronTimes[i] - chronTimes[i - 1]));
+                }
 
-            for (let i = 1; i < times.length; i++) diffs.push(Math.abs(times[i] - times[i - 1]));
-            return diffs;
-        }, []);
+                // ---- Highest-to-lowest ----
+                const [max, min] = [...highs]
+                    .sort((a, b) => b.price - a.price)
+                    .slice(0, 2)
+                    .map(h => h.highDateTime);
+
+                if (max && min) {
+                    acc.highLow.push(Math.abs(max - min));
+                }
+
+                return acc;
+            },
+            { high: [], highLow: [] }
+        );
     }
 
-    calculateAvgTimeBetweenHighs(trades) {
-        const diffs = this.getHighTimeDiffs(trades);
-        return calculateAverage(diffs);
+
+    calculateOptionHighTimeStats(trades) {
+        const { high, highLow } = this.getOptionHighTimeDiffs(trades);
+
+        return {
+            high: {
+                avg: calculateAverage(high),
+                median: calculateMedian(high)
+            },
+            highLow: {
+                avg: calculateAverage(highLow),
+                median: calculateMedian(highLow)
+            }
+        };
     }
 
-    calculateAvgTimeBetweenHighLow(trades) {
-        const diffs = this.getHighTimeDiffs(trades, { useHighLow: true });
-        return calculateAverage(diffs);
-    }
 
-    calculateMedianTimeBetweenHighLow(trades) {
-        return calculateMedian(this.getHighTimeDiffs(trades, { useHighLow: true }));
-    }
-
-    calculateMedianTimeBetweenHighs(trades) {
-        return calculateMedian(this.getHighTimeDiffs(trades));
-    }
 
 
     countTradesByDay(trades) {
@@ -1064,7 +1067,7 @@ class TradeDashboard {
 
     <div class="option-high-form">
         <div class="option-high-form__inputs">
-           <input type="date" class="option-high-form__date" value="2025-08-21">
+           <input type="date" class="option-high-form__date" value="2025-07-31">
             <input type="time" class="option-high-form__time">
             <input type="number" class="option-high-form__price" placeholder="Price" step="0.01">
             <button type="button" class="option-high-form__add-btn">+</button>
@@ -1140,80 +1143,85 @@ class TradeDashboard {
         });
     }
 
-    updateChoices(filter, choices) {
+    updateChoices(filter, {
+        values,
+        selected = [],
+        labelMap = null,
+        sort = true
+    }) {
+        if (!filter) return;
+
+        let uniqueValues = [...new Set(values)];
+
+        if (sort) {
+            uniqueValues.sort();
+        }
+
+        const choices = uniqueValues.map(v => ({
+            value: v,
+            label: labelMap?.[v] ?? v,
+            selected: selected.includes(v)
+        }));
+
         filter.clearChoices();
         filter.clearStore();
         filter.removeActiveItems();
-        filter.setChoices(choices, "value", "label", false);
+        filter.setChoices(choices);
     }
+
 
     updateDayFilter() {
-        if (!this.dayFilter) return;
-
-        const days = [...new Set(
-            this.tradesData.map(t => getDayName(t.tradeDateTime))
-        )].sort();
-
-        const selected = this.state.selectedDays;
-
-        this.updateChoices(
-            this.dayFilter,
-            days.map(d => ({ value: d, label: d, selected: selected.includes(d) }))
-        );
-
+        this.updateChoices(this.dayFilter, {
+            values: this.tradesData.map(t => getDayName(t.tradeDateTime)),
+            selected: this.state.selectedDays
+        });
     }
+
 
     updateTickerFilter() {
-        if (!this.tickerFilter) return;
-
-        const tickers = [...new Set(this.tradesData.map(t => t.ticker))].sort();
-        const selected = this.state.selectedTickers;
-
-        this.updateChoices(
-            this.tickerFilter,
-            tickers.map(t => ({ value: t, label: t, selected: selected.includes(t) }))
-        );
-
+        this.updateChoices(this.tickerFilter, {
+            values: this.tradesData.map(t => t.ticker),
+            selected: this.state.selectedTickers
+        });
     }
+
+    getTradeTypes(trade) {
+        const types = [];
+
+        const entryDay = trade.tradeDateTime.toDateString();
+        const expireDay = trade.expireDateTime.toDateString();
+
+        if (entryDay === expireDay) {
+            // Same-day expiry → 0DTE
+            types.push("0dte");
+        } else {
+            // Multi-day trade → swing
+            types.push("swing");
+
+            // If price hit a high on entry day → swing-day
+            if (this.isSwingDayTrade(trade)) {
+                types.push("swing-day");
+            }
+
+        }
+
+        return types;
+    }
+
 
     updateTradeTypeFilter() {
-        if (!this.tradeTypeFilter) return;
+        const values = this.tradesData.flatMap(t => this.getTradeTypes(t));
 
-        const types = new Set();
-
-        this.tradesData.forEach(t => {
-            if (t.tradeDateTime.toDateString() === t.expireDateTime.toDateString()) {
-                types.add("0dte");
-            } else {
-                types.add("swing");
-                if (t.optionPriceHighs?.some(h =>
-                    h.highDateTime.toDateString() === t.tradeDateTime.toDateString()
-                )) {
-                    types.add("swing-day");
-                }
+        this.updateChoices(this.tradeTypeFilter, {
+            values,
+            selected: this.state.selectedTradeTypes,
+            labelMap: {
+                swing: "Swing",
+                "swing-day": "Swing → Day",
+                "0dte": "0DTE"
             }
         });
-
-        const available = [...types];
-        const selected = this.state.selectedTradeTypes;
-
-        const labels = {
-            swing: "Swing",
-            "swing-day": "Swing → Day",
-            "0dte": "0DTE"
-        };
-
-        this.updateChoices(
-            this.tradeTypeFilter,
-            available.map(v => ({
-                value: v,
-                label: labels[v],
-                selected: selected.includes(v)
-            }))
-        );
-
     }
-
 
 
     updateDateFilter() {
