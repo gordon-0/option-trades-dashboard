@@ -1,0 +1,111 @@
+[
+  {
+    "id": "8b9ef1a4-bdeb-4249-a52f-efbaae98264b",
+    "high_prices": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "TEST2",
+    "average_entry": 1,
+    "strike_price": 300,
+    "option_type": "call",
+    "trade_datetime": "2025-10-28T15:01:00.000Z",
+    "expire_datetime": "2025-10-29T12:00:00.000Z",
+    "verified": false,
+    "option_price_highs": [
+      {
+        "id": "9df78c4c-78ce-404d-8c4a-6f0d4632dbad",
+        "high_datetime": "2025-10-28T13:45:00.000Z",
+        "price": 2
+      },
+      {
+        "id": "d05646f9-8722-4b7d-bb6b-1228fb9b90b8",
+        "high_datetime": "2025-10-28T13:46:00.000Z",
+        "price": 3
+      },
+      {
+        "id": "d3a91884-f3e2-4f84-a094-c16b803037cf",
+        "high_datetime": "2025-10-28T13:47:00.000Z",
+        "price": 4
+      },
+      {
+        "id": "9477e6ce-9ba8-4ea0-aaf8-61383f747980",
+        "high_datetime": "2025-10-28T13:48:00.000Z",
+        "price": 5
+      }
+    ],
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "7e37594f-77c5-4b20-b11b-3d49deea468c",
+    "trader": "@TheMarketRaven",
+    "ticker": "TEST",
+    "average_entry": 1,
+    "strike_price": 300,
+    "option_type": "call",
+    "trade_datetime": "2025-12-02T16:00:00.000Z",
+    "expire_datetime": "2025-12-02T11:00:00.000Z",
+    "verified": false,
+    "option_price_highs": [
+      {
+        "id": "60d9c377-ba5f-4ee1-bcd4-81adb9974d17",
+        "high_datetime": "2025-12-02T14:30:00.000Z",
+        "price": 2
+      },
+      {
+        "id": "cbe4c1fc-4519-4947-b152-cff039ebba7b",
+        "high_datetime": "2025-12-02T15:00:00.000Z",
+        "price": 3
+      },
+      {
+        "id": "eadcbd94-6a24-4190-b256-de4c605a1516",
+        "high_datetime": "2025-12-02T15:30:00.000Z",
+        "price": 4
+      },
+      {
+        "id": "9613beb2-5220-40f8-9d04-fb5cb34f5e7c",
+        "high_datetime": "2025-12-02T16:30:00.000Z",
+        "price": 5
+      }
+    ],
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "93b17f3f-978c-44ee-b3f2-913dd765d745",
+    "option_price_highs": [
+      {
+        "id": "5fdcadc3-55b8-446b-ba28-6030e1c91859",
+        "high_datetime": "2025-11-03T14:45:00.000Z",
+        "price": 2
+      },
+      {
+        "id": "75cc44d8-9b13-42f6-95e0-a04744183ec5",
+        "high_datetime": "2025-11-04T15:00:00.000Z",
+        "price": 3
+      },
+      {
+        "id": "2e67f3c8-ef5a-495c-9597-f64f4db4001e",
+        "high_datetime": "2025-11-05T15:15:00.000Z",
+        "price": 4
+      },
+      {
+        "id": "d8f2fe4a-10cc-49eb-869e-4c4192e36c6e",
+        "high_datetime": "2025-11-06T16:00:00.000Z",
+        "price": 5
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "TEST3",
+    "average_entry": 1,
+    "strike_price": 400,
+    "option_type": "call",
+    "trade_datetime": "2025-11-03T16:00:00.000Z",
+    "expire_datetime": "2025-11-07T11:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  }
+]

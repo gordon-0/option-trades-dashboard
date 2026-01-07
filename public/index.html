@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Option Trades Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+</head>
+
+<body>
+
+  <h1>Option Trades Dashboard</h1>
+
+  <!-- Dashboard stats / filters card -->
+  <div id="option-trades-dashboard" class="dashboard">
+    <div class="main-dashboard-card dashboard-card" id="main-dashboard-card">
+      <h2>Dashboard</h2>
+      <div class="filters">
+      </div>
+      <div class="dashboard-stats" id="dashboard-stats">
+        <!-- Stats like total P/L, number of trades, etc. -->
+      </div>
+    </div>
+
+    <!-- New Trade Form Card -->
+    <div class="dashboard-card" id="new-trade-dashboard-card">
+      <h2 class="new-trade-title">New Trade</h2>
+      <form class="new-trade-form" id="new-trade-form">
+        <div class="new-trade-form__section">
+          <div class="new-trade-form__trader">
+            <label for="trader">Trader</label>
+            <select id="trader">
+              <option value="@TheMarketRaven" selected>@TheMarketRaven</option>
+            </select>
+          </div>
+        </div>
+        <div class="new-trade-form__section">
+          <div class="new-trade-form__ticker">
+            <label for="ticker">Ticker</label>
+            <input type="text" id="ticker" required>
+          </div>
+          <div class="new-trade-form__expire-date">
+          <label for="expire-date">Expiration Date</label>
+          <input type="date" id="expire-date" required>
+        </div>
+          <div class="new-trade-form__avg-entry">
+            <label for="avg-entry">Average Entry</label>
+            <input type="number" step="0.01" id="avg-entry" required>
+          </div>
+          <div class="new-trade-form__strike-price">
+            <label for="strike-price">Price Target</label>
+            <input type="number" step="0.01" id="strike-price" required>
+          </div>
+        </div>
+        <div>
+        <div class="new-trade-form__section">
+          <div class="new-trade-form__option-type">
+          <label for="option-type">Option Type</label>
+          <select id="option-type">
+            <option value="call">Call</option>
+            <option value="put">Put</option>
+          </select>
+          </div>
+        <div class="new-trade-form__verified">
+          <label for="verified">Verified</label>
+          <select id="verified">
+            <option value="true">Yes</option>
+            <option value="false" selected>No</option>
+          </select>
+        </div>
+        <div class="new-trade-form__date">
+          <label for="date">Trade Date</label>
+          <input type="date" id="date" required>
+        </div>
+        <div class="new-trade-form__time">
+          <label for="time">Trade Time</label>
+          <input type="time" id="time" required>
+        </div>
+        </div>
+        </div>
+        <button class="new-trade-form__submit" type="submit">Add Trade</button>
+      </form>
+    </div>
+
+    <div id="option-cards-container">
+    </div>
+  </div>
+
+ <script type="module" src="js/trade-dashboard.js"></script>
+  <script type="module" src="js/new-trade-form.js"></script>
+
+</body>
+
+</html>

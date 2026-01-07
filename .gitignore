@@ -1,0 +1,19 @@
+# Node modules
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+
+# Ignore everything in uploads
+uploads/*
+
+# Except .gitkeep
+!uploads/.gitkeep
+
+dist/
+build/
