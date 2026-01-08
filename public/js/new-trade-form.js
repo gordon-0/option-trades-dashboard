@@ -13,8 +13,8 @@ class NewTradeForm {
 
     initFormDefaults() {
         const today = new Date().toISOString().slice(0, 10);
-/*         this.tradeDate.value = today;
-        this.expireDate.value = today;*/
+        /*         this.tradeDate.value = today;
+                this.expireDate.value = today;*/
         this.tradeDate.value = "2025-07-31";
         this.expireDate.value = "2025-07-31";
         this.tradeTime.value = "";
@@ -55,62 +55,62 @@ class NewTradeForm {
         )).toISOString();
     }
 
-async handleSubmit(e) {
-    e.preventDefault();
+    async handleSubmit(e) {
+        e.preventDefault();
 
-    // ✅ Combine user-entered date and time into a single UTC timestamp
-    const tradeDateTimeUTC = new Date(
-        `${this.tradeDate.value}T${this.tradeTime.value || '00:00'}`
-    ).toISOString();
+        // ✅ Combine user-entered date and time into a single UTC timestamp
+        const tradeDateTimeUTC = new Date(
+            `${this.tradeDate.value}T${this.tradeTime.value || '00:00'}`
+        ).toISOString();
 
-    // Expire date → NY market close, DST-safe
-    const expireDateTimeUTC = this.marketDateToUTC(this.expireDate.value, 16, 0);
+        // Expire date → NY market close, DST-safe
+        const expireDateTimeUTC = this.marketDateToUTC(this.expireDate.value, 16, 0);
 
-    const newTrade = {
-        trader: document.getElementById("trader").value,
-        ticker: document.getElementById("ticker").value.toUpperCase(),
-        average_entry: parseFloat(document.getElementById("avg-entry").value),
-        strike_price: parseFloat(document.getElementById("strike-price").value),
-        option_type: document.getElementById("option-type").value,
+        const newTrade = {
+            trader: document.getElementById("trader").value,
+            ticker: document.getElementById("ticker").value.toUpperCase(),
+            average_entry: parseFloat(document.getElementById("avg-entry").value),
+            strike_price: parseFloat(document.getElementById("strike-price").value),
+            option_type: document.getElementById("option-type").value,
 
-        trade_datetime: tradeDateTimeUTC,
-        expire_datetime: expireDateTimeUTC,
+            trade_datetime: tradeDateTimeUTC,
+            expire_datetime: expireDateTimeUTC,
 
-        verified: this.verifiedInput.value === "true",
-        option_price_highs: [],
-        high_override_id: null,
-        excluded: false,
-        treat_as_loss: false,
-    };
+            verified: this.verifiedInput.value === "true",
+            option_price_highs: [],
+            high_override_id: null,
+            excluded: false,
+            treat_as_loss: false,
+        };
 
-    try {
-        const res = await fetch("/trades", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newTrade)
-        });
+        try {
+            const res = await fetch("/trades", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newTrade)
+            });
 
-        if (!res.ok) throw new Error("Failed to save trade");
+            if (!res.ok) throw new Error("Failed to save trade");
 
-        // ← Replace starts here
-/*         const savedTrade = await res.json();
-        const normalizedTrade = window.tradeDashboard.normalizeTrades([savedTrade])[0];
-        window.tradeDashboard.tradesData.push(normalizedTrade);
-        window.tradeDashboard.recomputeDerivedState();
-        window.tradeDashboard.render(); */
+                const savedTrade = await res.json(); 
+                const tradeId = savedTrade.id; 
 
-        await window.tradeDashboard.refresh();
+            await window.tradeDashboard.refresh();
 
 
-        alert(`Trade for ${newTrade.ticker} added!`);
-        this.resetForm();
-        // ← Replace ends here
+            alert(`Trade for ${newTrade.ticker} added!`);
+            this.resetForm();
 
-    } catch (err) {
-        console.error(err);
-        alert("Failed to save trade.");
+            document.dispatchEvent(new CustomEvent("trades:changed", {
+                detail: { type: "add", tradeId }
+            }));
+
+
+        } catch (err) {
+            console.error(err);
+            alert("Failed to save trade.");
+        }
     }
-}
 
 
     resetForm() {

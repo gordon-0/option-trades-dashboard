@@ -1008,11 +1008,7 @@
         "id": "1f660450-cda1-4c4b-b28f-18b65d23ff11"
       }
     ],
-    "images": [
-      "/uploads/2025-12-11_0903AM_SPX_6880_2-65_C_20251227234401.png",
-      "/uploads/2025-12-11_0903AM_SPX_6880_2-65_C_20251227235244.png",
-      "/uploads/2025-12-11_0903AM_SPX_6880_2-65_C_20251227235323.png"
-    ]
+    "images": []
   },
   {
     "id": "4f24838f-e0bd-42c5-919d-bedd1cb3dbd5",
@@ -3404,6 +3400,1142 @@
     "option_type": "call",
     "trade_datetime": "2025-09-02T13:53:00.000Z",
     "expire_datetime": "2025-09-02T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "aae90ebe-1181-47bb-af98-18e9c2d2f6f2",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 2.25,
+    "strike_price": 6500,
+    "option_type": "call",
+    "trade_datetime": "2025-08-29T14:00:00.000Z",
+    "expire_datetime": "2025-08-29T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "7cd5e195-c352-4355-b090-8f2f1e747f4f",
+    "option_price_highs": [
+      {
+        "id": "b73f7b1a-4df1-44f0-aabf-9d84d31a222f",
+        "high_datetime": "2025-08-28T17:23:00.000Z",
+        "price": 5.3
+      },
+      {
+        "id": "268b2dde-0a30-4aee-8163-55a2330ad8a5",
+        "high_datetime": "2025-08-25T13:52:00.000Z",
+        "price": 3.8
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "AAPL",
+    "average_entry": 3.2,
+    "strike_price": 230,
+    "option_type": "call",
+    "trade_datetime": "2025-08-25T13:44:00.000Z",
+    "expire_datetime": "2025-09-05T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-21_0844AM_AAPL_230_3-2_C_20260105230642.png"
+    ]
+  },
+  {
+    "id": "4f720169-2eb8-4e77-ab7d-425042a12647",
+    "option_price_highs": [
+      {
+        "id": "6cf1fd69-f634-4fa5-a8ba-a003ba8cf877",
+        "high_datetime": "2025-08-28T15:16:00.000Z",
+        "price": 5
+      },
+      {
+        "id": "9d00d4f9-2d94-48b5-9456-88eefbe1f2c5",
+        "high_datetime": "2025-08-28T14:50:00.000Z",
+        "price": 4
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 2.95,
+    "strike_price": 6495,
+    "option_type": "call",
+    "trade_datetime": "2025-08-28T14:42:00.000Z",
+    "expire_datetime": "2025-08-28T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "6ba8a64b-1bba-495d-8e1a-bc9e6f5c7358",
+    "option_price_highs": [
+      {
+        "id": "78a67227-16a3-47e0-937c-a23e9cc155b7",
+        "high_datetime": "2025-08-28T14:51:00.000Z",
+        "price": 3.15
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "NVDA",
+    "average_entry": 2.81,
+    "strike_price": 185,
+    "option_type": "call",
+    "trade_datetime": "2025-08-28T14:12:00.000Z",
+    "expire_datetime": "2025-09-12T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-28_0912AM_NVDA_185_2-81_C_20260105213831.png"
+    ]
+  },
+  {
+    "id": "c156a9aa-8149-4b10-8350-a063e03cf2f4",
+    "option_price_highs": [
+      {
+        "id": "159d8ef5-e4f5-4d44-81ed-6f03706b323a",
+        "high_datetime": "2025-08-28T15:02:00.000Z",
+        "price": 2.63
+      },
+      {
+        "id": "9c520b5c-c885-4d4a-ad35-ec7399c2af51",
+        "high_datetime": "2025-08-28T15:09:00.000Z",
+        "price": 3.05
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "NFLX",
+    "average_entry": 2.3,
+    "strike_price": 1240,
+    "option_type": "call",
+    "trade_datetime": "2025-08-28T14:46:00.000Z",
+    "expire_datetime": "2025-08-29T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "07cdc905-db7f-419c-bde1-4630f0bda0f1",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "META",
+    "average_entry": 5.85,
+    "strike_price": 765,
+    "option_type": "call",
+    "trade_datetime": "2025-08-28T13:36:00.000Z",
+    "expire_datetime": "2025-09-05T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-28_0836AM_META_765_5-85_C_20260105213756.png"
+    ]
+  },
+  {
+    "id": "fc1750fc-1cb2-428e-895d-8c99c9fb1ae7",
+    "option_price_highs": [
+      {
+        "id": "f63cdcb3-7bd7-490b-b015-d80a1af51261",
+        "high_datetime": "2025-08-27T19:13:00.000Z",
+        "price": 4.58
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "QQQ",
+    "average_entry": 3.75,
+    "strike_price": 573,
+    "option_type": "put",
+    "trade_datetime": "2025-08-27T19:05:00.000Z",
+    "expire_datetime": "2025-08-29T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "28b1a537-2813-4006-bb6f-206f41654a70",
+    "option_price_highs": [
+      {
+        "id": "05e6813b-7183-4f93-a856-8d7fd56b3994",
+        "high_datetime": "2025-08-27T14:15:00.000Z",
+        "price": 4.45
+      },
+      {
+        "id": "1f3d55db-8d07-48fd-85d3-3620bf027456",
+        "high_datetime": "2025-08-27T14:21:00.000Z",
+        "price": 5.5
+      },
+      {
+        "id": "3ff7b269-1f33-437a-9bc8-67fdaecd3d8c",
+        "high_datetime": "2025-08-27T14:09:00.000Z",
+        "price": 3.9
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 3.35,
+    "strike_price": 6525,
+    "option_type": "call",
+    "trade_datetime": "2025-08-27T13:59:00.000Z",
+    "expire_datetime": "2025-08-28T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "6ea5c25d-65dc-404f-9285-8f2d0dc524bd",
+    "option_price_highs": [
+      {
+        "id": "c58d0ce2-e31f-44bc-b8cb-99e35e9a449c",
+        "high_datetime": "2025-08-27T13:39:00.000Z",
+        "price": 3.55
+      },
+      {
+        "id": "d24192ea-03f4-4829-a7b2-2586d16c5f28",
+        "high_datetime": "2025-08-26T14:56:00.000Z",
+        "price": 2.87
+      },
+      {
+        "id": "07663868-be07-44a2-a2fe-f5f6013d5654",
+        "high_datetime": "2025-08-26T14:28:00.000Z",
+        "price": 2.65
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "AMZN",
+    "average_entry": 2.32,
+    "strike_price": 227.5,
+    "option_type": "call",
+    "trade_datetime": "2025-08-26T14:16:00.000Z",
+    "expire_datetime": "2025-08-29T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-21_0916AM_AMZN_227.5_2-32_C_20260105231050.png"
+    ]
+  },
+  {
+    "id": "1eefcbae-58ac-47e2-9829-2bb836a1b877",
+    "option_price_highs": [
+      {
+        "id": "99f43c04-a284-45ec-9a9c-476d61112496",
+        "high_datetime": "2025-08-26T18:59:00.000Z",
+        "price": 2.4
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 2,
+    "strike_price": 6480,
+    "option_type": "call",
+    "trade_datetime": "2025-08-26T14:23:00.000Z",
+    "expire_datetime": "2025-08-27T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "42066aed-f496-4d01-bb2c-02861887da08",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "BMNR",
+    "average_entry": 2.7,
+    "strike_price": 55,
+    "option_type": "call",
+    "trade_datetime": "2025-08-25T14:59:00.000Z",
+    "expire_datetime": "2025-08-29T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-21_0959AM_BMNR_55_2-7_C_20260105231131.png"
+    ]
+  },
+  {
+    "id": "5631a5b0-f14a-4b94-a437-e2d564ef8ed5",
+    "option_price_highs": [
+      {
+        "id": "55316e73-c922-4185-a7e1-02ec566a8d2b",
+        "high_datetime": "2025-08-25T15:39:00.000Z",
+        "price": 5.4
+      },
+      {
+        "id": "876e1145-26f6-4083-bbde-921f0474418a",
+        "high_datetime": "2025-08-25T15:30:00.000Z",
+        "price": 4.5
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "TSLA",
+    "average_entry": 3.99,
+    "strike_price": 350,
+    "option_type": "call",
+    "trade_datetime": "2025-08-25T14:17:00.000Z",
+    "expire_datetime": "2025-08-29T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-21_0917AM_TSLA_350_3-99_C_20260105231122.png"
+    ]
+  },
+  {
+    "id": "3d0f0e1f-7a9f-475d-844d-5848868d29e4",
+    "option_price_highs": [
+      {
+        "id": "74026553-668b-49a8-b81b-394652966ea7",
+        "high_datetime": "2025-08-25T15:10:00.000Z",
+        "price": 1.65
+      },
+      {
+        "id": "e2a9a097-728c-4b99-a8e6-0b3277d499a3",
+        "high_datetime": "2025-08-25T15:18:00.000Z",
+        "price": 1.9
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 1.45,
+    "strike_price": 6500,
+    "option_type": "call",
+    "trade_datetime": "2025-08-25T14:36:00.000Z",
+    "expire_datetime": "2025-08-26T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "04b9c61b-fe10-4c9e-b317-1b850709fecb",
+    "option_price_highs": [
+      {
+        "id": "adf90b5b-2664-4d69-8c2a-c793bb427283",
+        "high_datetime": "2025-08-25T14:04:00.000Z",
+        "price": 6.45
+      },
+      {
+        "id": "17496ba4-fae3-4f9e-8c9e-2fdb4cb23cbd",
+        "high_datetime": "2025-08-25T13:40:00.000Z",
+        "price": 5
+      },
+      {
+        "id": "297c3db1-3667-4b97-a548-1a721876ec2b",
+        "high_datetime": "2025-08-25T13:43:00.000Z",
+        "price": 5.8
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "NFLX",
+    "average_entry": 3.63,
+    "strike_price": 1250,
+    "option_type": "call",
+    "trade_datetime": "2025-08-25T13:37:00.000Z",
+    "expire_datetime": "2025-08-29T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-21_0837AM_NFLX_1250_3-63_C_20260105230659.png"
+    ]
+  },
+  {
+    "id": "4934e8dc-d3ae-400f-bea0-af13c4688f34",
+    "option_price_highs": [
+      {
+        "id": "d724f21b-c06e-4f51-95ec-713ffb52b369",
+        "high_datetime": "2025-08-21T17:19:00.000Z",
+        "price": 4.43
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPY",
+    "average_entry": 3.97,
+    "strike_price": 636,
+    "option_type": "put",
+    "trade_datetime": "2025-08-21T13:46:00.000Z",
+    "expire_datetime": "2025-08-25T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": []
+  },
+  {
+    "id": "aa619a8b-97e6-4aa3-9601-1338e1dfbf89",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "UNH",
+    "average_entry": 3,
+    "strike_price": 310,
+    "option_type": "call",
+    "trade_datetime": "2025-08-20T13:33:00.000Z",
+    "expire_datetime": "2025-08-22T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-20_0833AM_UNH_310_3_C_20260106200933.png"
+    ]
+  },
+  {
+    "id": "28e358b2-1508-4d60-8cc3-02a2e5a392b1",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "MU",
+    "average_entry": 3.32,
+    "strike_price": 125,
+    "option_type": "call",
+    "trade_datetime": "2025-08-19T14:24:00.000Z",
+    "expire_datetime": "2025-08-29T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "29e801c6-fe0d-47f0-869a-fda1491fe444",
+    "option_price_highs": [
+      {
+        "id": "525b376c-085a-4fdb-9503-b1a384af74f6",
+        "high_datetime": "2025-08-19T17:01:00.000Z",
+        "price": 13
+      },
+      {
+        "id": "75147a28-edd0-424a-b177-e8145741d17c",
+        "high_datetime": "2025-08-19T14:49:00.000Z",
+        "price": 6.2
+      },
+      {
+        "id": "5e0498a1-8b9a-4064-a299-03e940e14610",
+        "high_datetime": "2025-08-19T14:45:00.000Z",
+        "price": 5.2
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 4,
+    "strike_price": 6400,
+    "option_type": "put",
+    "trade_datetime": "2025-08-19T14:43:00.000Z",
+    "expire_datetime": "2025-08-20T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "b6d5ab18-0342-4742-a936-3a813d71bcbc",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPY",
+    "average_entry": 3.27,
+    "strike_price": 644,
+    "option_type": "call",
+    "trade_datetime": "2025-08-18T14:45:00.000Z",
+    "expire_datetime": "2025-08-22T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "198478ef-f462-4d07-9f14-3cf9eda9b375",
+    "option_price_highs": [
+      {
+        "id": "283bcd29-3a28-4001-9530-f9cf332e07f7",
+        "high_datetime": "2025-08-19T14:11:00.000Z",
+        "price": 6.14
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "TSLA",
+    "average_entry": 5.15,
+    "strike_price": 350,
+    "option_type": "call",
+    "trade_datetime": "2025-08-19T13:54:00.000Z",
+    "expire_datetime": "2025-08-29T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "49e12691-5bc2-4208-835c-d75e0696e41b",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "MSTR",
+    "average_entry": 4.75,
+    "strike_price": 375,
+    "option_type": "call",
+    "trade_datetime": "2025-08-18T15:58:00.000Z",
+    "expire_datetime": "2025-08-22T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-18_1058AM_MSTR_375_4-75_C_20260106202504.png"
+    ]
+  },
+  {
+    "id": "15db4e94-7fb5-4f94-b5e8-df02acb197f7",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 2.5,
+    "strike_price": 6470,
+    "option_type": "call",
+    "trade_datetime": "2025-08-18T13:34:00.000Z",
+    "expire_datetime": "2025-08-18T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-18_0834AM_SPX_6470_2-5_C_20260106203100.png"
+    ]
+  },
+  {
+    "id": "9ce6d5b5-60d4-46f8-8803-179809f12131",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "GOOGL",
+    "average_entry": 3.57,
+    "strike_price": 205,
+    "option_type": "call",
+    "trade_datetime": "2025-08-18T13:36:00.000Z",
+    "expire_datetime": "2025-08-22T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "0265717f-0e25-443c-9677-07551652dbb2",
+    "option_price_highs": [
+      {
+        "id": "be87f266-e312-47bc-8da5-dac8b16bb53c",
+        "high_datetime": "2025-08-14T13:47:00.000Z",
+        "price": 4.6
+      },
+      {
+        "id": "b5689054-ec3c-4091-9ae9-3103fb69311c",
+        "high_datetime": "2025-08-14T13:53:00.000Z",
+        "price": 6.1
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 3.3,
+    "strike_price": 6470,
+    "option_type": "call",
+    "trade_datetime": "2025-08-14T13:35:00.000Z",
+    "expire_datetime": "2025-08-14T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "dbafa0a9-2aa7-43d4-8d9b-0db9d4a74872",
+    "option_price_highs": [
+      {
+        "id": "a18b43ec-dcfb-484b-8728-853f1c1e133b",
+        "high_datetime": "2025-08-13T18:13:00.000Z",
+        "price": 2.35
+      },
+      {
+        "id": "0a39ca10-c302-4c21-9400-5a6d35119609",
+        "high_datetime": "2025-08-13T18:16:00.000Z",
+        "price": 2.9
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 1.5,
+    "strike_price": 6465,
+    "option_type": "call",
+    "trade_datetime": "2025-08-13T17:22:00.000Z",
+    "expire_datetime": "2025-08-13T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "83d03eb8-97ee-4551-9bd2-c479be5dc2df",
+    "option_price_highs": [
+      {
+        "id": "5ead6aae-d7b0-43e1-b1a6-0a2c1b695fc8",
+        "high_datetime": "2025-08-13T15:12:00.000Z",
+        "price": 4.7
+      },
+      {
+        "id": "023cafdd-9679-4547-9e7f-e8a4c9044f0f",
+        "high_datetime": "2025-08-13T14:27:00.000Z",
+        "price": 3.6
+      },
+      {
+        "id": "17136d19-ec58-43e0-b79f-f180f46be103",
+        "high_datetime": "2025-08-13T14:25:00.000Z",
+        "price": 3.15
+      },
+      {
+        "id": "536bf17f-7b7a-4484-94cc-c0386378319e",
+        "high_datetime": "2025-08-13T14:48:00.000Z",
+        "price": 4.4
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 2.4,
+    "strike_price": 6440,
+    "option_type": "put",
+    "trade_datetime": "2025-08-13T14:11:00.000Z",
+    "expire_datetime": "2025-08-13T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "8ee4a8a4-88e4-4e05-b179-cae32f0c1a2f",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "NFLX",
+    "average_entry": 4,
+    "strike_price": 1250,
+    "option_type": "call",
+    "trade_datetime": "2025-08-13T13:47:00.000Z",
+    "expire_datetime": "2025-08-15T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-13_0847AM_NFLX_1250_4_C_20260106205012.png"
+    ]
+  },
+  {
+    "id": "f2e6a202-c310-4f53-b023-c1f8ff0111a0",
+    "option_price_highs": [
+      {
+        "id": "6ee6d9b0-42ca-4580-b23b-098ca72d0e31",
+        "high_datetime": "2025-08-13T14:04:00.000Z",
+        "price": 1.29
+      },
+      {
+        "id": "ed5dc1ca-df40-4adf-b318-b823d2cd10e5",
+        "high_datetime": "2025-08-13T13:37:00.000Z",
+        "price": 0.9
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "IBIT",
+    "average_entry": 0.71,
+    "strike_price": 70,
+    "option_type": "call",
+    "trade_datetime": "2025-08-12T13:37:00.000Z",
+    "expire_datetime": "2025-08-22T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "dcec5aa8-70cf-498c-993d-d76fc67f8b46",
+    "option_price_highs": [
+      {
+        "id": "1cffcb3d-7803-499f-bbde-e81a11602f34",
+        "high_datetime": "2025-08-13T14:20:00.000Z",
+        "price": 12.05
+      },
+      {
+        "id": "b6a85a3f-1803-4d80-acb1-ce4ef2255a53",
+        "high_datetime": "2025-08-13T13:36:00.000Z",
+        "price": 9.58
+      },
+      {
+        "id": "724d57fc-ad27-4856-8341-f92c1b525aa3",
+        "high_datetime": "2025-08-11T14:20:00.000Z",
+        "price": 5
+      },
+      {
+        "id": "b9fd2db3-498f-478b-a773-41ca3ac07e06",
+        "high_datetime": "2025-08-11T14:29:00.000Z",
+        "price": 5.65
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "AMD",
+    "average_entry": 3.85,
+    "strike_price": 175,
+    "option_type": "call",
+    "trade_datetime": "2025-08-11T14:10:00.000Z",
+    "expire_datetime": "2025-08-15T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-11_0910AM_AMD_175_3-85_C_20260106212709.png"
+    ]
+  },
+  {
+    "id": "a132f3f0-cc56-427f-ad47-2d015bc00d2a",
+    "option_price_highs": [
+      {
+        "id": "ef6bcef9-4e1c-4439-8394-c893f0ad04d7",
+        "high_datetime": "2025-08-13T13:37:00.000Z",
+        "price": 5.35
+      },
+      {
+        "id": "5beb3a9c-4f67-4a30-8f3d-ee4302bd441b",
+        "high_datetime": "2025-08-11T16:11:00.000Z",
+        "price": 3.57
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "MSFT",
+    "average_entry": 3.1,
+    "strike_price": 530,
+    "option_type": "call",
+    "trade_datetime": "2025-08-11T15:23:00.000Z",
+    "expire_datetime": "2025-08-15T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-11_1023AM_MSFT_530_3-1_C_20260106212110.png"
+    ]
+  },
+  {
+    "id": "a7d26e05-3e2e-432a-b3e3-b6349bce2631",
+    "option_price_highs": [
+      {
+        "id": "895a75c3-20c4-483f-9f99-24e2723c94e9",
+        "high_datetime": "2025-08-13T13:37:00.000Z",
+        "price": 8.19
+      },
+      {
+        "id": "f1e2aea3-d3a2-4102-bc97-c2aa27533e75",
+        "high_datetime": "2025-08-12T14:57:00.000Z",
+        "price": 4.5
+      },
+      {
+        "id": "766e8c45-5bc1-466f-9dba-52c1a8790c95",
+        "high_datetime": "2025-08-12T19:23:00.000Z",
+        "price": 6
+      },
+      {
+        "id": "dfc5aeff-c9a2-4176-ae50-5aca7764aad6",
+        "high_datetime": "2025-08-12T15:22:00.000Z",
+        "price": 5
+      },
+      {
+        "id": "c2e69b55-6841-450b-b39f-91e760358d20",
+        "high_datetime": "2025-08-12T14:29:00.000Z",
+        "price": 4
+      },
+      {
+        "id": "aae33896-b148-4aa8-bb9d-2cbdace6e2d1",
+        "high_datetime": "2025-08-11T16:11:00.000Z",
+        "price": 4.46
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPY",
+    "average_entry": 3.84,
+    "strike_price": 638,
+    "option_type": "call",
+    "trade_datetime": "2025-08-11T14:00:00.000Z",
+    "expire_datetime": "2025-08-15T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-11_0900AM_SPY_638_3-84_C_20260106212629.png"
+    ]
+  },
+  {
+    "id": "e3da1f52-2f17-4a1e-a80e-f8676d7bbeda",
+    "option_price_highs": [
+      {
+        "id": "f8cc1aca-fb41-42c7-be1f-6047f93c51c9",
+        "high_datetime": "2025-08-12T13:34:00.000Z",
+        "price": 8.75
+      },
+      {
+        "id": "e2fe5d82-759f-414d-843c-2c3b71783a65",
+        "high_datetime": "2025-08-12T13:35:00.000Z",
+        "price": 11.35
+      },
+      {
+        "id": "06cfad6d-eb44-470a-bb4f-d8f500d482cd",
+        "high_datetime": "2025-08-12T13:48:00.000Z",
+        "price": 14.1
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "META",
+    "average_entry": 5.95,
+    "strike_price": 782.5,
+    "option_type": "call",
+    "trade_datetime": "2025-08-12T13:31:00.000Z",
+    "expire_datetime": "2025-08-15T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "6d601ff4-eb37-40fd-ab5c-2c4e77c60290",
+    "option_price_highs": [
+      {
+        "id": "9548dd45-c03c-4b06-81c1-d161248910b6",
+        "high_datetime": "2025-08-11T16:03:00.000Z",
+        "price": 6.8
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "TSLA",
+    "average_entry": 5.7,
+    "strike_price": 360,
+    "option_type": "call",
+    "trade_datetime": "2025-08-11T13:46:00.000Z",
+    "expire_datetime": "2025-08-22T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "e48e2aab-cb3a-41b8-a761-63056af6cf34",
+    "option_price_highs": [
+      {
+        "id": "7048fefa-9125-43fb-b173-01c013596828",
+        "high_datetime": "2025-08-07T14:19:00.000Z",
+        "price": 3.05
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "HIMS",
+    "average_entry": 2.69,
+    "strike_price": 53,
+    "option_type": "call",
+    "trade_datetime": "2025-08-07T14:09:00.000Z",
+    "expire_datetime": "2025-08-15T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-07_0909AM_HIMS_53_2-69_C_20260106213144.png"
+    ]
+  },
+  {
+    "id": "9d009499-d289-41c5-84c8-44408b75532e",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 2.8,
+    "strike_price": 6410,
+    "option_type": "call",
+    "trade_datetime": "2025-08-07T14:00:00.000Z",
+    "expire_datetime": "2025-08-07T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "975d8d0b-185a-4f78-9297-2fb6b16cdf27",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 3,
+    "strike_price": 6360,
+    "option_type": "call",
+    "trade_datetime": "2025-08-07T15:55:00.000Z",
+    "expire_datetime": "2025-08-07T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "be1eda4b-3aaa-42e6-95f2-b852af6a12d8",
+    "option_price_highs": [
+      {
+        "id": "e95eb56e-514b-49c4-bca2-3fb447573623",
+        "high_datetime": "2025-08-07T13:32:00.000Z",
+        "price": 8.65
+      },
+      {
+        "id": "cdc191d6-0725-4760-b29b-3581491f2b23",
+        "high_datetime": "2025-08-06T18:35:00.000Z",
+        "price": 5.65
+      },
+      {
+        "id": "59e93fbf-d6ca-49d1-bae7-7e0c6ec04b5d",
+        "high_datetime": "2025-08-06T15:20:00.000Z",
+        "price": 4.25
+      },
+      {
+        "id": "885fd5d9-2b32-4c0c-949f-7d0c39eff06e",
+        "high_datetime": "2025-08-06T15:02:00.000Z",
+        "price": 3.95
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "QQQ",
+    "average_entry": 3.4,
+    "strike_price": 564,
+    "option_type": "call",
+    "trade_datetime": "2025-08-06T14:41:00.000Z",
+    "expire_datetime": "2025-08-11T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-06_0941AM_QQQ_564_3-4_C_20260106213641.png",
+      "/uploads/2025-08-06_0941AM_QQQ_564_3-4_C_20260106214428.png"
+    ]
+  },
+  {
+    "id": "afcc8509-8921-4c83-8119-7f2309957564",
+    "option_price_highs": [
+      {
+        "id": "ed588a08-35d9-4ec2-84e9-224bb76bc836",
+        "high_datetime": "2025-08-06T13:55:00.000Z",
+        "price": 3.9
+      },
+      {
+        "id": "1c86bd47-aefb-4bac-8839-674e18a55377",
+        "high_datetime": "2025-08-06T13:56:00.000Z",
+        "price": 4.3
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 3,
+    "strike_price": 6335,
+    "option_type": "call",
+    "trade_datetime": "2025-08-06T13:48:00.000Z",
+    "expire_datetime": "2025-08-06T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "cca6ed84-8012-4967-b28f-a053f09e9c82",
+    "option_price_highs": [
+      {
+        "id": "5d9f1c3f-eb6d-4d79-bac5-7ef3a668aa60",
+        "high_datetime": "2025-08-05T17:50:00.000Z",
+        "price": 10
+      },
+      {
+        "id": "2520e7ec-e83d-4a8b-8aa9-2f55eb44db1e",
+        "high_datetime": "2025-08-05T16:33:00.000Z",
+        "price": 8.2
+      },
+      {
+        "id": "fcfa6c05-e7fc-42ce-9f49-d1865becd17f",
+        "high_datetime": "2025-08-05T16:08:00.000Z",
+        "price": 5.8
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 3.45,
+    "strike_price": 6315,
+    "option_type": "call",
+    "trade_datetime": "2025-08-05T15:48:00.000Z",
+    "expire_datetime": "2025-08-05T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "2a1bba09-debd-4485-b912-a97bba16f92d",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "META",
+    "average_entry": 2.77,
+    "strike_price": 800,
+    "option_type": "call",
+    "trade_datetime": "2025-08-05T13:55:00.000Z",
+    "expire_datetime": "2025-08-05T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-05_0855AM_META_800_2-77_C_20260106215258.png"
+    ]
+  },
+  {
+    "id": "dde11118-cb3f-48f0-907d-67b56f52c025",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "TSLA",
+    "average_entry": 5.46,
+    "strike_price": 312.5,
+    "option_type": "call",
+    "trade_datetime": "2025-08-05T13:53:00.000Z",
+    "expire_datetime": "2025-08-08T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-05_0853AM_TSLA_312.5_5-46_C_20260106215326.png"
+    ]
+  },
+  {
+    "id": "da2050b8-cfcf-40db-8f30-78b1632e762a",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 2.1,
+    "strike_price": 6370,
+    "option_type": "call",
+    "trade_datetime": "2025-08-05T13:47:00.000Z",
+    "expire_datetime": "2025-08-05T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "15ffee1d-6461-44df-a157-932ab1fc1923",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPY",
+    "average_entry": 3.9,
+    "strike_price": 629,
+    "option_type": "put",
+    "trade_datetime": "2025-08-04T14:30:00.000Z",
+    "expire_datetime": "2025-08-08T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "a06a5613-cae5-4194-8823-0c9b0cee6839",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "AAPL",
+    "average_entry": 1.7,
+    "strike_price": 210,
+    "option_type": "call",
+    "trade_datetime": "2025-08-04T14:37:00.000Z",
+    "expire_datetime": "2025-08-08T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-08-04_0937AM_AAPL_210_1-7_C_20260106220106.png"
+    ]
+  },
+  {
+    "id": "1db74c20-d0e0-4391-b57d-53a94bc066ee",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 2.15,
+    "strike_price": 6330,
+    "option_type": "call",
+    "trade_datetime": "2025-08-01T13:38:00.000Z",
+    "expire_datetime": "2025-08-01T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "aba1ae82-30b1-45a7-8e12-7ad80c5aa354",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "TEST",
+    "average_entry": 1,
+    "strike_price": 100,
+    "option_type": "call",
+    "trade_datetime": "2025-07-31T15:00:00.000Z",
+    "expire_datetime": "2025-07-31T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "6653ebe6-814c-40c6-a328-55282c29df87",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "TEST",
+    "average_entry": 1,
+    "strike_price": 100,
+    "option_type": "call",
+    "trade_datetime": "2025-07-31T15:00:00.000Z",
+    "expire_datetime": "2025-07-31T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "39f57321-a124-422c-bb0a-feb52d8d39cc",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "TEST",
+    "average_entry": 1,
+    "strike_price": 100,
+    "option_type": "call",
+    "trade_datetime": "2025-07-31T15:00:00.000Z",
+    "expire_datetime": "2025-07-31T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "a14fcd42-04bb-4533-89f3-f4c58ab5ec9d",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "TEST",
+    "average_entry": 1,
+    "strike_price": 100,
+    "option_type": "call",
+    "trade_datetime": "2025-07-31T15:00:00.000Z",
+    "expire_datetime": "2025-07-31T12:00:00.000Z",
     "verified": false,
     "high_override_id": null,
     "excluded": false,
