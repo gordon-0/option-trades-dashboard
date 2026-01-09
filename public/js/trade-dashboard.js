@@ -8,22 +8,26 @@ import {
     calculatePercentFromPrice
 } from "./logic/helpers.js";
 
+import { testFilterEndpoint } from "./logic/testFilterEndpoint.js";
+
+
 class TradeDashboard {
 
-    static FILTER_TRANSFORMS = {
-        startDate: v => v ? new Date(v) : null,
-        endDate: v => v ? new Date(v) : null,
-        maxGainPercent: v => v === "" ? null : parseFloat(v),
-        maxDaysPassed: v => v === "" ? null : parseInt(v, 10),
-        selectedSellPrice: v => {
-            if (v === "avg" || v === "median") return v;
-            return parseInt(v, 10) || 0;
-        },
-        sortOrder: v => v,
-        verified: v => v,
-        maxHighTime: v => v || null,
-        percentLossModifier: v => v === "" ? 100 : parseFloat(v)
-    };
+static FILTER_TRANSFORMS = {
+    startDate: v => v ? new Date(v) : null,
+    endDate: v => v ? new Date(v) : null,
+    maxGainPercent: v => v === "" ? null : parseFloat(v),
+    maxDaysPassed: v => v === "" ? null : parseInt(v, 10),
+    selectedSellPrice: v => {
+        if (v === "avg" || v === "median") return v;
+        return parseInt(v, 10) || 0;
+    },
+    sortOrder: v => v,
+    verified: v => v,
+    maxHighTime: v => v || null,
+    percentLossModifier: v => v === "" ? 100 : parseFloat(v)
+};
+
 
 constructor() {
         this.tradesData = [];
@@ -65,8 +69,13 @@ constructor() {
                 this.bindTradeChangeEvents();
                 this.recomputeDerivedState();
                 this.render();
+                this.testFilters();
             })
             .catch(err => console.error("Error fetching trades:", err));
+    }
+
+    async testFilters(){
+        const testTrades = await testFilterEndpoint();
     }
 
     bindTradeChangeEvents() {
@@ -99,11 +108,40 @@ constructor() {
         }
     }
 
-    async fetchTrades() {
-        const res = await fetch("/trades");
+async fetchTrades() {
+    try {
+        const payload = {
+            startDate: this.state.startDate?.toISOString() || null,
+            endDate: this.state.endDate?.toISOString() || null,
+            verified: this.state.verified,
+            tickers: this.state.selectedTickers,
+            tradeTypes: this.state.selectedTradeTypes,
+            daysOfWeek: this.state.selectedDays,
+            sortOrder: this.state.sortOrder
+        };
+
+        const res = await fetch("/trades/filtered", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
+
+        const data = await res.json();
+
+        console.log("Fetched trades:", data);
+
+        // Unpack the structure
+        this.availableFilters = data.availableFilters || {};
+        return data.trades || [];
+    } catch (err) {
+        console.error("Error fetching trades:", err);
+        return [];
     }
+}
+
+
     normalizeTrades(data) {
         return data.map(t => ({
             id: t.id,
@@ -156,41 +194,74 @@ constructor() {
         this.onStateChange(prevState, this.state);
     }
 
-    onStateChange(prev, next) {
-        const filterChanged = JSON.stringify(prev) !== JSON.stringify(next);
+async onStateChange(prev, next) {
+    const filterChanged = JSON.stringify(prev) !== JSON.stringify(next);
+    if (!filterChanged) return;
 
-        if (filterChanged) {
-            this.recomputeDerivedState();
-            this.updateAllDynamicFilters();
-            this.render();
+    try {
+        // Always fetch from backend with new filters
+        const data = await this.fetchTrades();
+        this.tradesData = this.normalizeTrades(data);
+    } catch (err) {
+        console.error("Error fetching trades:", err);
+        this.tradesData = [];
+    }
+
+    this.recomputeDerivedState();
+    this.updateAllDynamicFilters();
+    this.render();
+}
+
+   getTradeTypes(trade) {
+        const types = [];
+
+        const entryDay = trade.tradeDateTime.toDateString();
+        const expireDay = trade.expireDateTime.toDateString();
+
+        if (entryDay === expireDay) {
+            // Same-day expiry → 0DTE
+            types.push("0dte");
+        } else {
+            // Multi-day trade → swing
+            types.push("swing");
+
+            // If price hit a high on entry day → swing-day
+            if (this.isSwingDayTrade(trade)) {
+                types.push("swing-day");
+            }
+
         }
+
+        return types;
     }
 
-    recomputeDerivedState() {
-        // Filter trades according to current state
-        this._filteredTrades = this.getFilteredTrades(this.tradesData);
-        this._visibleTrades = this._filteredTrades.filter(t => !t.excluded);
 
-        // Calculate P/L per trade
-        this._plByTradeId = new Map(
-            this._visibleTrades.map(t => [t.id, this.calculatePL(t)])
-        );
+recomputeDerivedState() {
+    // Backend already returns filtered trades
+    this._filteredTrades = [...this.tradesData]; 
+    this._visibleTrades = this._filteredTrades.filter(t => !t.excluded);
 
-        // Aggregate general stats
-        this._stats = this.aggregateTradeStats(
-            this._visibleTrades,
-            this._plByTradeId
-        );
+    // Calculate P/L per trade
+    this._plByTradeId = new Map(
+        this._visibleTrades.map(t => [t.id, this.calculatePL(t)])
+    );
 
-        // Aggregate day-based / win-loss stats
-        this._derivedStats = {
-            winLossByDay: this.countWinsLossesByDay(this._filteredTrades, this._plByTradeId),
-            tradesByDay: this.countTradesByDay(this._filteredTrades),
-            plByDayBought: this.plByDayBought(this._filteredTrades, this.state.selectedSellPrice),
-            plByDaySold: this.plByDaySold(this._filteredTrades, this.state.selectedSellPrice),
-            plByTradeId: this._plByTradeId
-        };
-    }
+    // Aggregate general stats
+    this._stats = this.aggregateTradeStats(
+        this._visibleTrades,
+        this._plByTradeId
+    );
+
+    // Keep option-high related derived stats
+    this._derivedStats = {
+        winLossByDay: this.countWinsLossesByDay(this._filteredTrades, this._plByTradeId),
+        tradesByDay: this.countTradesByDay(this._filteredTrades),
+        plByDayBought: this.plByDayBought(this._filteredTrades, this.state.selectedSellPrice),
+        plByDaySold: this.plByDaySold(this._filteredTrades, this.state.selectedSellPrice),
+        plByTradeId: this._plByTradeId
+    };
+}
+
 
 render() {
     this.renderStats();
@@ -339,72 +410,6 @@ calculateWinRatiosFromState() {
 
     return { winRatio, weightedWinRatio };
 }
-
-    getFilteredTrades(trades) {
-        return trades
-            .filter(t => this.filterByDate(t, this.state.startDate, this.state.endDate))
-            .filter(t => this.filterByDay(t, this.state.selectedDays))
-            .filter(t => this.filterByTicker(t, this.state.selectedTickers))
-            .filter(t => this.filterByVerified(t, this.state.verified))
-            .filter(t => this.filterByTradeType(t, this.state.selectedTradeTypes))
-            .sort((a, b) =>
-                this.state.sortOrder === "oldest"
-                    ? a.tradeDateTime - b.tradeDateTime
-                    : b.tradeDateTime - a.tradeDateTime
-            );
-
-    }
-
-    filterByDate(trade, startDate, endDate) {
-        if (!trade.tradeDateTime) return false;
-
-        const tradeDay = trade.tradeDateTime; // already a Date object
-        const tradeUTCYear = tradeDay.getUTCFullYear();
-        const tradeUTCMonth = tradeDay.getUTCMonth();
-        const tradeUTCDate = tradeDay.getUTCDate();
-
-        const normalizedTradeDayUTC = new Date(Date.UTC(tradeUTCYear, tradeUTCMonth, tradeUTCDate));
-
-        const startUTC = startDate
-            ? new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()))
-            : null;
-
-        const endUTC = endDate
-            ? new Date(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate()))
-            : null;
-
-        return (!startUTC || normalizedTradeDayUTC >= startUTC) &&
-            (!endUTC || normalizedTradeDayUTC <= endUTC);
-    }
-
-
-    filterByTradeType(trade, selectedTradeTypes = []) {
-        if (!selectedTradeTypes.length) return true;
-
-        const tradeTypes = this.getTradeTypes(trade);
-
-        return selectedTradeTypes.some(type =>
-            tradeTypes.includes(type)
-        );
-    }
-
-    filterByDay(trade, selectedDays) {
-        if (!selectedDays.length) return true;
-        const dayName = getDayName(trade.tradeDateTime);
-        return selectedDays.includes(dayName);
-    }
-
-    filterByTicker(trade, selectedTickers) {
-        if (!selectedTickers.length) return true;
-        return selectedTickers.includes(trade.ticker);
-    }
-
-    filterByVerified(trade, verified) {
-        if (verified === "all") return true;
-        if (verified === "verified") return trade.verified;
-        if (verified === "unverified") return !trade.verified;
-        return true;
-    }
 
     getFilteredHighs(trade) {
         if (trade.treatAsLoss || !trade.optionPriceHighs?.length) return [];
@@ -624,13 +629,6 @@ calculateWinRatiosFromState() {
         return daysPL;
     }
 
-
-    /**
- * Calculates average, median, and their % returns relative to avgEntry
- * @param {Array} highs - array of { price: number } objects
- * @param {number} avgEntry - trade average entry price
- * @returns {Object} - { avg, avgPercent, median, medianPercent }
- */
     calculateHighStats(highs, avgEntry) {
         if (!highs.length || !avgEntry) {
             return { avg: '—', avgPercent: null, median: '—', medianPercent: null };
@@ -904,9 +902,6 @@ renderTradesWinLossByDay() {
         .join(" ");
 }
 
-
-
-
     renderStatsTemplate({
         swings,
         swingsDay,
@@ -956,7 +951,7 @@ renderTradesWinLossByDay() {
         </div>
 
         <div class="dashboard-days">
-             Trades by Day: ${this.renderTradesCountByDay(tradesByDay)}
+            Trades by Day: ${this.renderTradesCountByDay(tradesByDay)}
         </div>
 
         <div class="dashboard-days">
@@ -1201,32 +1196,31 @@ renderTradesWinLossByDay() {
         this.updateDaysPassedFilter();
     }
 
-    bindFilterEvents() {
-        const filtersRoot = this.mainDashboardCard.querySelector(".filters");
-        if (!filtersRoot) return;
+bindFilterEvents() {
+    const filtersRoot = this.mainDashboardCard.querySelector(".filters");
+    if (!filtersRoot) return;
 
-        // Handle normal change events (inputs/selects)
-        filtersRoot.addEventListener("change", e => {
-            const el = e.target;
-            const key = el.dataset.filter;
-            if (!key) return;
+    filtersRoot.addEventListener("change", e => {
+        const el = e.target;
+        const key = el.dataset.filter;
+        if (!key) return;
 
-            const transform = TradeDashboard.FILTER_TRANSFORMS[key] || (v => v);
+        const transform = TradeDashboard.FILTER_TRANSFORMS[key] || (v => v);
 
-            this.setState({ [key]: transform(el.value) });
-        });
+        // Update state, which will trigger fetch & render
+        this.setState({ [key]: transform(el.value) });
+    });
 
-        // Handle reset buttons
-        filtersRoot.addEventListener("click", e => {
-            if (!e.target.closest("#reset-max-time")) return;
-            const { maxHighTimeFilterEl } = this.el;
-            if (maxHighTimeFilterEl) maxHighTimeFilterEl.value = "";
-            this.setState({ maxHighTime: null });
+    // Reset max-high-time button
+    filtersRoot.addEventListener("click", e => {
+        if (!e.target.closest("#reset-max-time")) return;
+        const { maxHighTimeFilterEl } = this.el;
+        if (maxHighTimeFilterEl) maxHighTimeFilterEl.value = "";
+        this.setState({ maxHighTime: null });
+    });
+}
 
-        });
-    }
-
-    initMultiChoiceFilters() {
+        initMultiChoiceFilters() {
         // Day Filter
         this.dayFilter = new Choices("#day-filter", { removeItemButton: true, shouldSort: false, itemSelectText: "" });
         this.dayFilter.passedElement.element.addEventListener("change", () => {
@@ -1245,6 +1239,7 @@ renderTradesWinLossByDay() {
             this.setState({ selectedTradeTypes: this.tradeTypeFilter.getValue(true) });
         });
     }
+
 
     updateChoices(filter, {
         values,
@@ -1273,58 +1268,38 @@ renderTradesWinLossByDay() {
     }
 
 
-    updateDayFilter() {
-        this.updateChoices(this.dayFilter, {
-            values: this.tradesData.map(t => getDayName(t.tradeDateTime)),
-            selected: this.state.selectedDays
-        });
-    }
+updateDayFilter() {
+    const daysOfWeek = this.availableFilters?.daysOfWeek || [];
+    this.updateChoices(this.dayFilter, {
+        values: daysOfWeek,
+        selected: this.state.selectedDays,
+        sort: false 
+    });
+}
 
 
-    updateTickerFilter() {
-        this.updateChoices(this.tickerFilter, {
-            values: this.tradesData.map(t => t.ticker),
-            selected: this.state.selectedTickers
-        });
-    }
 
-    getTradeTypes(trade) {
-        const types = [];
+updateTickerFilter() {
+    const tickers = this.availableFilters?.tickers || [];
+    this.updateChoices(this.tickerFilter, {
+        values: tickers,
+        selected: this.state.selectedTickers
+    });
+}
 
-        const entryDay = trade.tradeDateTime.toDateString();
-        const expireDay = trade.expireDateTime.toDateString();
 
-        if (entryDay === expireDay) {
-            // Same-day expiry → 0DTE
-            types.push("0dte");
-        } else {
-            // Multi-day trade → swing
-            types.push("swing");
-
-            // If price hit a high on entry day → swing-day
-            if (this.isSwingDayTrade(trade)) {
-                types.push("swing-day");
-            }
-
+updateTradeTypeFilter() {
+    const types = this.availableFilters?.tradeTypes || [];
+    this.updateChoices(this.tradeTypeFilter, {
+        values: types,
+        selected: this.state.selectedTradeTypes,
+        labelMap: {
+            swing: "Swing",
+            "swing-day": "Swing → Day",
+            "0dte": "0DTE"
         }
-
-        return types;
-    }
-
-
-    updateTradeTypeFilter() {
-        const values = this.tradesData.flatMap(t => this.getTradeTypes(t));
-
-        this.updateChoices(this.tradeTypeFilter, {
-            values,
-            selected: this.state.selectedTradeTypes,
-            labelMap: {
-                swing: "Swing",
-                "swing-day": "Swing → Day",
-                "0dte": "0DTE"
-            }
-        });
-    }
+    });
+}
 
 
     updateDateFilter() {
@@ -1416,58 +1391,30 @@ renderTradesWinLossByDay() {
         }
     }
 
-    updateDaysPassedFilter() {
-        const { daysPassedFilterEl } = this.el;
-        if (!this.tradesData.length || !daysPassedFilterEl) return;
+updateDaysPassedFilter() {
+    const { daysPassedFilterEl } = this.el;
+    if (!daysPassedFilterEl) return;
 
-        let maxDays = 0;
+    const daysPassedArray = this.availableFilters?.daysPassed || [0];
 
-        // Loop over all trades and their highs to find the maximum days difference
-        this.tradesData.forEach(trade => {
-            if (!(trade.tradeDateTime instanceof Date)) return;
-            if (!trade.optionPriceHighs?.length) return;
+    // Build options with formatted labels
+    const options = daysPassedArray.map(value => {
+        let label;
+        if (value === 0) label = "Same Day";
+        else if (value === 1) label = "1 Day";
+        else label = `${value} Days`;
+        return `<option value="${value}">${label}</option>`;
+    });
 
-            const tradeDay = new Date(
-                trade.tradeDateTime.getFullYear(),
-                trade.tradeDateTime.getMonth(),
-                trade.tradeDateTime.getDate()
-            );
+    daysPassedFilterEl.innerHTML = options.join("");
 
-            trade.optionPriceHighs.forEach(high => {
-                if (!(high.highDateTime instanceof Date)) return;
+    // Default selected: highest value
+    const defaultValue = Math.max(...daysPassedArray);
+    daysPassedFilterEl.value = defaultValue;
+    this.setState({ maxDaysPassed: parseInt(daysPassedFilterEl.value, 10) });
+}
 
-                const highDay = new Date(
-                    high.highDateTime.getFullYear(),
-                    high.highDateTime.getMonth(),
-                    high.highDateTime.getDate()
-                );
 
-                const daysDiff = Math.floor((highDay - tradeDay) / 86400000);
-                if (daysDiff > maxDays) maxDays = daysDiff;
-            });
-        });
-
-        // Build dropdown options
-        daysPassedFilterEl.innerHTML =
-            `<option value="0">Same Day</option>` +
-            Array.from({ length: maxDays }, (_, i) => {
-                const d = i + 1;
-                return `<option value="${d}">${d} Day${d > 1 ? "s" : ""}</option>`;
-            }).join("");
-
-        // Preserve user selection if valid, otherwise default to maxDays
-        const current = this.state.maxDaysPassed;
-        const nextValue =
-            Number.isFinite(current) && current <= maxDays
-                ? current
-                : maxDays;
-
-        if (nextValue !== current) {
-            this.setState({ maxDaysPassed: nextValue });
-        }
-
-        daysPassedFilterEl.value = String(nextValue);
-    }
 
 
     updateAllDynamicFilters() {

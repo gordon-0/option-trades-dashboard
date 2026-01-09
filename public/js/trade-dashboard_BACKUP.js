@@ -8,26 +8,6 @@ import {
     calculatePercentFromPrice
 } from "./logic/helpers.js";
 
-import { TradeState } from './state/tradeState.js';
-
-const initialState = {
-    startDate: null,
-    endDate: null,
-    verified: "all",
-    selectedTradeTypes: [],
-    selectedSellPrice: 0,
-    maxHighTime: null,
-    maxDaysPassed: null,
-    maxGainPercent: null,
-    selectedDays: [],
-    selectedTickers: [],
-    sortOrder: "newest",
-    percentLossModifier: 100
-};
-
-export const tradeState = new TradeState(initialState);
-
-const dashboard = new TradeDashboard({ state: tradeState });
 
 class TradeDashboard {
 
@@ -46,17 +26,27 @@ class TradeDashboard {
         percentLossModifier: v => v === "" ? 100 : parseFloat(v)
     };
 
-    constructor({ state }) {
-        this.state = state;
-
-        // Subscribe to state changes
-        this.state.subscribe((prev, next) => this.onStateChange(prev, next));
-
+constructor() {
         this.tradesData = [];
         this.optionCardContainer = document.getElementById("option-cards-container");
         this.mainDashboardCard = document.getElementById("main-dashboard-card");
 
-        // Derived / internal state
+        this.state = {
+            startDate: null,
+            endDate: null,
+            verified: "all",
+            selectedTradeTypes: [],
+            selectedSellPrice: 0,
+            maxHighTime: null,
+            maxDaysPassed: null,
+            maxGainPercent: null,
+            selectedDays: [],
+            selectedTickers: [],
+            sortOrder: "newest",
+            percentLossModifier: 100
+        };
+
+        // Initialize derived data containers
         this._filteredTrades = [];
         this._visibleTrades = [];
         this._plByTradeId = new Map();
@@ -915,9 +905,6 @@ renderTradesWinLossByDay() {
         .join(" ");
 }
 
-
-
-
     renderStatsTemplate({
         swings,
         swingsDay,
@@ -967,7 +954,7 @@ renderTradesWinLossByDay() {
         </div>
 
         <div class="dashboard-days">
-             Trades by Day: ${this.renderTradesCountByDay(tradesByDay)}
+            Trades by Day: ${this.renderTradesCountByDay(tradesByDay)}
         </div>
 
         <div class="dashboard-days">
@@ -1237,7 +1224,7 @@ renderTradesWinLossByDay() {
         });
     }
 
-    initMultiChoiceFilters() {
+        initMultiChoiceFilters() {
         // Day Filter
         this.dayFilter = new Choices("#day-filter", { removeItemButton: true, shouldSort: false, itemSelectText: "" });
         this.dayFilter.passedElement.element.addEventListener("change", () => {
