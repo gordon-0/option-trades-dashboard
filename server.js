@@ -12,6 +12,13 @@ const {
   deleteTrade
 } = require("./tradesService");
 
+// ===== IMPORT TRADES HELPERS =====
+
+const {
+  calculateDaysPassedForTrade,
+} = require("./tradesHelpers");
+
+
 // ===== IMPORT IMAGE HANDLERS =====
 const { uploadTradeImage, deleteTradeImage } = require("./tradesImages");
 
@@ -113,15 +120,18 @@ app.post("/trades/filtered", (req, res) => {
   let trades = getAllTrades();
   console.log(`Starting with ${trades.length} trades`);
 
+  trades.forEach(trade => {
+    calculateDaysPassedForTrade(trade);
+  });
+
+  const availableFilters = getAvailableFilters(trades);
+
   trades = filterByDate(trades, startDate, endDate);
   trades = filterByVerified(trades, verified);
   trades = filterByTickers(trades, tickers);
   trades = filterByTradeTypes(trades, tradeTypes);
   trades = filterByDaysOfWeek(trades, daysOfWeek);
   trades = sortTradesByDate(trades, sortBy);
-
-  // Compute available filters from ALL trades (or filtered trades, depending on what you want)
-  const availableFilters = getAvailableFilters(trades);
 
   res.json({
     trades,

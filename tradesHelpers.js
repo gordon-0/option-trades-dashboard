@@ -1,23 +1,19 @@
+// tradesHelpers.js
+
 // ===== Calculate days passed =====
-function calculateDaysPassed(trades) {
-    const daysPassedSet = new Set();
+function calculateDaysPassedForTrade(trade) {
+    if (!trade.trade_datetime || !trade.option_price_highs) return;
 
-    trades.forEach(trade => {
-        if (!trade.trade_datetime || !trade.option_price_highs) return;
+    const tradeDate = new Date(trade.trade_datetime);
 
-        const tradeDate = new Date(trade.trade_datetime);
+    trade.option_price_highs.forEach(high => {
+        if (!high.high_datetime) return;
 
-        trade.option_price_highs.forEach(high => {
-            if (!high.high_datetime) return;
-
-            const highDate = new Date(high.high_datetime);
-            const diffMs = highDate - tradeDate;
-            const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            if (days >= 0) daysPassedSet.add(days);
-        });
+        const highDate = new Date(high.high_datetime);
+        const diffMs = highDate - tradeDate;
+        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        high.daysPassed = days >= 0 ? days : 0;
     });
-
-    return Array.from(daysPassedSet).sort((a, b) => a - b);
 }
 
 // ===== Determine if a trade is a swing-day trade =====
@@ -51,7 +47,7 @@ function getTradeTypes(trade) {
 }
 
 module.exports = {
-    calculateDaysPassed,
     getTradeTypes,
-    isSwingDayTrade
+    isSwingDayTrade,
+    calculateDaysPassedForTrade
 };

@@ -1,12 +1,13 @@
 // tradesFilters.js
 
-const { calculateDaysPassed, getTradeTypes } = require("./tradesHelpers");
+const { getTradeTypes } = require("./tradesHelpers");
 
 
 function getAvailableFilters(trades) {
     const tickersSet = new Set();
     const tradeTypesSet = new Set();
     const daysSet = new Set();
+    const daysPassedSet = new Set(); // NEW: collect unique daysPassed
 
     // Define week order here once
     const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -23,19 +24,28 @@ function getAvailableFilters(trades) {
             const dayName = dayNames[(jsDayIndex + 6) % 7]; // Sunday (0) → last in array
             daysSet.add(dayName);
         }
+
+        // Collect daysPassed from option_price_highs
+        if (trade.option_price_highs?.length) {
+            trade.option_price_highs.forEach(high => {
+                if (typeof high.daysPassed === "number") {
+                    daysPassedSet.add(high.daysPassed);
+                }
+            });
+        }
     });
 
     const sortedDays = dayNames.filter(day => daysSet.has(day));
-
-    const daysPassed = calculateDaysPassed(trades);
+    const sortedDaysPassed = Array.from(daysPassedSet).sort((a, b) => a - b); // sort numerically
 
     return {
         tickers: Array.from(tickersSet).sort(),
         tradeTypes: Array.from(tradeTypesSet).sort(),
         daysOfWeek: sortedDays,
-        daysPassed
+        daysPassed: sortedDaysPassed
     };
 }
+
 
 
 
@@ -129,7 +139,7 @@ function filterByDaysOfWeek(trades, selectedDays = []) {
     return trades.filter(trade => {
         if (!trade.trade_datetime) return false; // skip invalid dates
 
-        const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const tradeDay = dayNames[new Date(trade.trade_datetime).getDay()];
 
         return selectedDays.includes(tradeDay);

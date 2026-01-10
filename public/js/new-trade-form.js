@@ -95,7 +95,7 @@ class NewTradeForm {
                 const savedTrade = await res.json(); 
                 const tradeId = savedTrade.id; 
 
-            await window.tradeDashboard.refresh();
+            await window.tradeDashboard.reloadTrades();
 
 
             alert(`Trade for ${newTrade.ticker} added!`);
