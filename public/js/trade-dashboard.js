@@ -108,6 +108,8 @@ class TradeDashboard {
         return this.state.derived;
     }
 
+    
+
     async reloadTrades() {
         try {
             const data = await this.fetchTrades();
@@ -310,74 +312,44 @@ class TradeDashboard {
         };
     }
 
-    computeSummary(trades, plByTradeId, metrics) {
-        const summary = trades.reduce(
-            (acc, trade) => {
-                const { dollars } = plByTradeId.get(trade.id);
+    
+  computeSummary(trades, plByTradeId, metrics) {
+    const totals = this.calculateTradeTotals(trades, plByTradeId);
+    const outcomes = this.calculateTradeOutcomes(trades, plByTradeId);
+    const composition = this.calculateTradeComposition(trades);
+    const duration = this.calculateTradeDurations(trades);
 
-                acc.totalProfit += dollars;
-                acc.totalCost += trade.avgEntry * 100;
+    const { winRatio, weightedWinRatio } =
+        this.calculateWinRatios(metrics, plByTradeId);
 
-                if (!trade.treatAsLoss && dollars > 0) acc.winTradeCount++;
-                else acc.lossTradeCount++;
+    return {
+        // Money
+        totalProfit: totals.profit,
+        totalCost: totals.cost,
+        totalPercent: totals.percent,
 
-                if (trade.optionType === "call") acc.calls++;
-                if (trade.optionType === "put") acc.puts++;
+        // Outcomes
+        winTradeCount: outcomes.wins,
+        lossTradeCount: outcomes.losses,
+        winRatio,
+        weightedWinRatio,
 
-                const isSameDay =
-                    trade.tradeDateTime?.toDateString() ===
-                    trade.expireDateTime?.toDateString();
+        // Composition
+        calls: composition.calls,
+        puts: composition.puts,
+        swings: composition.swings,
+        swingsDay: composition.swingsDay,
+        zeroDTE: composition.zeroDTE,
 
-                if (!isSameDay) {
-                    acc.swings++;
-                    if (!trade.treatAsLoss && this.isSwingDayTrade(trade)) {
-                        acc.swingsDay++;
-                    }
-                } else {
-                    acc.zeroDTE++;
-                }
+        // Durations
+        ...duration,
 
-                return acc;
-            },
-            {
-                totalProfit: 0,
-                totalCost: 0,
-                calls: 0,
-                puts: 0,
-                swings: 0,
-                swingsDay: 0,
-                zeroDTE: 0,
-                winTradeCount: 0,
-                lossTradeCount: 0
-            }
-        );
-
-        summary.totalPercent = summary.totalCost
-            ? (summary.totalProfit / summary.totalCost) * 100
-            : 0;
-
-        const { winRatio, weightedWinRatio } =
-            this.calculateWinRatios(metrics, plByTradeId);
-
-        summary.winRatio = winRatio;
-        summary.weightedWinRatio = weightedWinRatio;
-
-        const timeStats = this.calculateOptionHighTimeStats(trades);
-        summary.avgMs = timeStats.high.avg;
-        summary.medianMs = timeStats.high.median;
-        summary.avgHL = timeStats.highLow.avg;
-        summary.medianHL = timeStats.highLow.median;
-
-        // passthroughs used by UI
-        summary.tradesByDay = metrics.tradesByDay;
-        summary.plByDayBought = metrics.plByDayBought;
-        summary.plByDaySold = metrics.plByDaySold;
-
-        return summary;
-    }
-
-
-
+        // UI passthroughs
+        tradesByDay: metrics.tradesByDay,
+        plByDayBought: metrics.plByDayBought,
+        plByDaySold: metrics.plByDaySold
+    };
+}
 
 
 
@@ -387,62 +359,77 @@ class TradeDashboard {
     }
 
 
-    aggregateTradeStats(plByTradeId, visibleTrades, derivedStats) {
-        const stats = {
-            totalProfit: 0,
-            totalCost: 0,
-            totalPercent: 0,
-            calls: 0,
-            puts: 0,
-            swings: 0,
-            swingsDay: 0,
-            zeroDTE: 0,
-            winTradeCount: 0,
-            lossTradeCount: 0
-        };
+    calculateTradeTotals(trades, plByTradeId) {
+    let profit = 0;
+    let cost = 0;
 
-        visibleTrades.forEach(t => {
-            const { dollars } = plByTradeId.get(t.id);
-
-            stats.totalProfit += dollars;
-            stats.totalCost += t.avgEntry * 100;
-
-            if (!t.treatAsLoss && dollars > 0) stats.winTradeCount++;
-            else stats.lossTradeCount++;
-
-            if (t.optionType.toLowerCase() === "call") stats.calls++;
-            if (t.optionType.toLowerCase() === "put") stats.puts++;
-
-            if (t.tradeDateTime.toDateString() !== t.expireDateTime.toDateString()) {
-                stats.swings++;
-                if (!t.treatAsLoss && this.isSwingDayTrade(t)) stats.swingsDay++;
-            }
-
-            if (t.tradeDateTime.toDateString() === t.expireDateTime.toDateString()) {
-                stats.zeroDTE++;
-            }
-        });
-
-        stats.totalPercent = stats.totalCost
-            ? (stats.totalProfit / stats.totalCost) * 100
-            : 0;
-
-        const { winRatio, weightedWinRatio } = this.calculateWinRatiosFromState(derivedStats);
-        stats.winRatio = winRatio;
-        stats.weightedWinRatio = weightedWinRatio;
-
-        const timeStats = this.calculateOptionHighTimeStats(visibleTrades);
-        stats.avgMs = timeStats.high.avg;
-        stats.medianMs = timeStats.high.median;
-        stats.avgHL = timeStats.highLow.avg;
-        stats.medianHL = timeStats.highLow.median;
-
-        stats.tradesByDay = derivedStats.tradesByDay;
-        stats.plByDayBought = derivedStats.plByDayBought;
-        stats.plByDaySold = derivedStats.plByDaySold;
-
-        return stats;
+    for (const trade of trades) {
+        const { dollars } = plByTradeId.get(trade.id);
+        profit += dollars;
+        cost += trade.avgEntry * 100;
     }
+
+    return {
+        profit,
+        cost,
+        percent: cost ? (profit / cost) * 100 : 0
+    };
+}
+
+calculateTradeOutcomes(trades, plByTradeId) {
+    let wins = 0;
+    let losses = 0;
+
+    for (const trade of trades) {
+        const { dollars } = plByTradeId.get(trade.id);
+        if (!trade.treatAsLoss && dollars > 0) wins++;
+        else losses++;
+    }
+
+    return { wins, losses };
+}
+
+calculateTradeComposition(trades) {
+    let calls = 0;
+    let puts = 0;
+    let swings = 0;
+    let swingsDay = 0;
+    let zeroDTE = 0;
+
+    for (const trade of trades) {
+        const isSameDay =
+            trade.tradeDateTime?.toDateString() ===
+            trade.expireDateTime?.toDateString();
+
+        if (trade.optionType === "call") calls++;
+        if (trade.optionType === "put") puts++;
+
+        if (isSameDay) {
+            zeroDTE++;
+        } else {
+            swings++;
+            if (!trade.treatAsLoss && this.isSwingDayTrade(trade)) {
+                swingsDay++;
+            }
+        }
+    }
+
+    return { calls, puts, swings, swingsDay, zeroDTE };
+}
+
+calculateTradeDurations(trades) {
+    const timeStats = this.calculateOptionHighTimeStats(trades);
+
+    return {
+        avgMs: timeStats.high.avg,
+        medianMs: timeStats.high.median,
+        avgHL: timeStats.highLow.avg,
+        medianHL: timeStats.highLow.median
+    };
+}
+
+
+
 
 
     countWinsLossesByDay(trades, plByTradeId) {
