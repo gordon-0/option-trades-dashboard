@@ -17,22 +17,34 @@ function getTradesMinMaxDates(trades) {
   };
 }
 
+function getDaysPassed(tradeDatetime, highDatetime) {
+  if (!tradeDatetime || !highDatetime) return null;
+
+  const tradeDate = new Date(tradeDatetime);
+  const highDate = new Date(highDatetime);
+
+  if (isNaN(tradeDate) || isNaN(highDate)) return null;
+
+  const diffMs = highDate - tradeDate;
+  return Math.max(
+    0,
+    Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  );
+}
+
 
 // ===== Calculate days passed =====
-function calculateDaysPassedForTrade(trade) {
-    if (!trade.trade_datetime || !trade.option_price_highs) return;
+function addDaysPassedToTrade(trade) {
+  if (!trade.trade_datetime || !trade.option_price_highs) return;
 
-    const tradeDate = new Date(trade.trade_datetime);
-
-    trade.option_price_highs.forEach(high => {
-        if (!high.high_datetime) return;
-
-        const highDate = new Date(high.high_datetime);
-        const diffMs = highDate - tradeDate;
-        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        high.days_passed = days >= 0 ? days : 0;
-    });
+  trade.option_price_highs.forEach(high => {
+    high.days_passed = getDaysPassed(
+      trade.trade_datetime,
+      high.high_datetime
+    );
+  });
 }
+
 
 // ===== Determine if a trade is a swing-day trade =====
 function isSwingDayTrade(trade) {
@@ -67,6 +79,7 @@ function getTradeTypes(trade) {
 module.exports = {
     getTradeTypes,
     isSwingDayTrade,
-    calculateDaysPassedForTrade,
+    getDaysPassed,
+    addDaysPassedToTrade,
     getTradesMinMaxDates
 };

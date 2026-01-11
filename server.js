@@ -15,7 +15,8 @@ const {
 // ===== IMPORT TRADES HELPERS =====
 
 const {
-  calculateDaysPassedForTrade,
+  addDaysPassedToTrade,
+  getDaysPassed,
   getTradesMinMaxDates
 } = require("./tradesHelpers");
 
@@ -74,6 +75,7 @@ app.put("/update_trade/:id", (req, res) => {
   res.status(200).json(updatedTrade);
 });
 
+
 // POST new high price to a trade
 app.post("/trades/:id/high", (req, res) => {
   const tradeId = req.params.id.trim();
@@ -101,25 +103,31 @@ app.post("/trades/:id/high", (req, res) => {
     trade.option_price_highs = [];
   }
 
-  // 1️⃣ Create the high
+  // 1️⃣ Create the high (clean, no derived fields)
   const newHigh = {
     id: crypto.randomUUID(),
     high_datetime: parsedDate.toISOString(),
     price
   };
 
-  // 2️⃣ Mutate trade
+  // 2️⃣ Persist trade FIRST
   trade.option_price_highs.push(newHigh);
-
-  // 3️⃣ IMPORTANT: compute daysPassed using your existing helper
-  calculateDaysPassedForTrade(trade);
-
-  // 4️⃣ Persist trade
   updateTrade(tradeId, trade);
 
-  // 5️⃣ Return the fully computed high (now includes daysPassed)
-  console.log(`Added high price to trade ${tradeId}:`, newHigh);
-  res.status(201).json(newHigh);
+  // 3️⃣ Compute days_passed ONLY for response
+  const days_passed = getDaysPassed(
+    trade.trade_datetime,
+    newHigh.high_datetime
+  );
+
+  // 4️⃣ Return enriched response
+  const responseHigh = {
+    ...newHigh,
+    days_passed
+  };
+
+  console.log(`Added high price to trade ${tradeId}:`, responseHigh);
+  res.status(201).json(responseHigh);
 });
 
 
@@ -139,7 +147,7 @@ app.post("/trades/filtered", (req, res) => {
   console.log(`Starting with ${trades.length} trades`);
 
   trades.forEach(trade => {
-    calculateDaysPassedForTrade(trade);
+    addDaysPassedToTrade(trade);
   });
 
   const tradesMinMaxDates = getTradesMinMaxDates(trades);
