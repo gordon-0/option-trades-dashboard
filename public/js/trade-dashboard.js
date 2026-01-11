@@ -17,7 +17,7 @@ static FILTER_TRANSFORMS = {
     startDate: v => v ? new Date(v) : null,
     endDate: v => v ? new Date(v) : null,
     maxGainPercent: v => v === "" ? null : parseFloat(v),
-    maxDaysPassed: v => v === "" ? null : parseInt(v, 10),
+    selectedMaxDaysPassed: v => v === "" ? null : parseInt(v, 10),
     selectedSellPrice: v => {
         if (v === "avg" || v === "median") return v;
         return parseInt(v, 10) || 0;
@@ -35,25 +35,33 @@ constructor() {
         this.mainDashboardCard = document.getElementById("main-dashboard-card");
 
         this.state = {
-            startDate: null,
-            endDate: null,
-            verified: "all",
-            selectedTradeTypes: [],
-            selectedSellPrice: 0,
-            maxHighTime: null,
-            maxDaysPassed: null,
-            maxGainPercent: null,
-            selectedDays: [],
-            selectedTickers: [],
-            sortOrder: "newest",
-            percentLossModifier: 100
-        };
+    query: {
+        startDate: null,
+        endDate: null,
+        verified: "all",
+        selectedTradeTypes: [],
+        selectedDays: [],
+        selectedTickers: [],
+        sortOrder: "newest"
+    },
 
-        // Initialize derived data containers
-        this._visibleTrades = [];
-        this._plByTradeId = new Map();
-        this._stats = {};
-        this._derivedStats = {};
+    view: {
+        selectedSellPrice: 0,
+        selectedMaxDaysPassed: null,
+        maxHighTime: null,
+        maxGainPercent: null,
+        percentLossModifier: 100
+    },
+
+derived: {
+  visibleTrades: [],
+  plByTradeId: new Map(),
+  metrics: {},
+  summary: {}
+}
+
+};
+
 
         this.init();
     }
@@ -87,6 +95,19 @@ constructor() {
         });
     }
 
+    get query() {
+    return this.state.query;
+}
+
+get view() {
+    return this.state.view;
+}
+
+get derived() {
+    return this.state.derived;
+}
+
+
 /*     async refresh() {
         try {
             const data = await this.fetchTrades();
@@ -116,14 +137,24 @@ constructor() {
 
 async fetchTrades() {
     try {
+        const {
+            startDate,
+            endDate,
+            verified,
+            selectedTickers,
+            selectedTradeTypes,
+            selectedDays,
+            sortOrder
+        } = this.query; // ✅ NEW SOURCE OF TRUTH
+
         const payload = {
-            startDate: this.state.startDate?.toISOString() || null,
-            endDate: this.state.endDate?.toISOString() || null,
-            verified: this.state.verified,
-            tickers: this.state.selectedTickers,
-            tradeTypes: this.state.selectedTradeTypes,
-            daysOfWeek: this.state.selectedDays,
-            sortOrder: this.state.sortOrder
+            startDate: startDate?.toISOString() || null,
+            endDate: endDate?.toISOString() || null,
+            verified,
+            tickers: selectedTickers,
+            tradeTypes: selectedTradeTypes,
+            daysOfWeek: selectedDays,
+            sortOrder
         };
 
         const res = await fetch("/trades/filtered", {
@@ -136,9 +167,6 @@ async fetchTrades() {
 
         const data = await res.json();
 
-        console.log("Fetched trades:", data);
-
-        // Unpack the structure
         this.availableFilters = data.availableFilters || {};
         return data.trades || [];
     } catch (err) {
@@ -146,6 +174,7 @@ async fetchTrades() {
         return [];
     }
 }
+
 
 
     normalizeTrades(data) {
@@ -185,7 +214,7 @@ async fetchTrades() {
             verifiedFilterEl: document.getElementById("verified-filter"),
             maxGainPercentFilterEl: document.getElementById("max-gain-percent-filter"),
             maxHighTimeFilterEl: document.getElementById("max-high-time"),
-            daysPassedFilterEl: document.getElementById("days-passed-filter"),
+            daysPassedFilterEl: document.getElementById("max-days-passed-filter"),
             tradeTypeFilterEl: document.getElementById("trade-type-filter"),
             dayFilterFilterEl: document.getElementById("day-filter"),
             tickerFilterFilterEl: document.getElementById("ticker-filter"),
@@ -194,151 +223,217 @@ async fetchTrades() {
         };
     }
 
-    setState(partial) {
-        const prevState = { ...this.state };
+setState(partial) {
+  const prevState = this.state;
 
-        this.state = { ...this.state, ...partial };
+  const nextState = {
+    query: prevState.query,
+    view: prevState.view,
+    derived: prevState.derived
+  };
 
-        this.onStateChange(prevState, this.state);
+  let queryChanged = false;
+  let viewChanged = false;
+
+  for (const [key, value] of Object.entries(partial)) {
+    if (key in prevState.query) {
+      if (prevState.query[key] !== value) {
+        nextState.query = { ...nextState.query, [key]: value };
+        queryChanged = true;
+      }
+    } else if (key in prevState.view) {
+      if (prevState.view[key] !== value) {
+        nextState.view = { ...nextState.view, [key]: value };
+        viewChanged = true;
+      }
+    } else if (key in prevState.derived) {
+      nextState.derived = { ...nextState.derived, [key]: value };
     }
+  }
 
-async onStateChange(prev, next) {
-    const filterChanged = JSON.stringify(prev) !== JSON.stringify(next);
-    if (!filterChanged) return;
-
-    // Determine if a trade-level filter changed
-    const tradeFilters = ['startDate', 'endDate', 'verified', 'selectedTickers', 'selectedTradeTypes', 'selectedDays', 'sortOrder'];
-    const shouldFetch = tradeFilters.some(f => JSON.stringify(prev[f]) !== JSON.stringify(next[f]));
-
-    if (shouldFetch) {
-        try {
-            const data = await this.fetchTrades();
-            this.tradesData = this.normalizeTrades(data);
-
-            // Update trade-level dependent filters
-            this.updateAllDynamicFilters();
-
-        } catch (err) {
-            console.error("Error fetching trades:", err);
-            this.tradesData = [];
-        }
-    }
-
-    // Recompute derived state that depends on option highs
-    this.recomputeDerivedState();
-
-    // Always render
-    this.render();
+  this.state = nextState;
+  this.onStateChange(prevState, nextState, { queryChanged, viewChanged });
 }
+
+
+
+
+async onStateChange(prev, next, { queryChanged, viewChanged }) {
+  if (!queryChanged && !viewChanged) return;
+
+  if (queryChanged) {
+    const data = await this.fetchTrades();
+    this.tradesData = this.normalizeTrades(data);
+    this.updateAllDynamicFilters();
+  }
+
+  this.recomputeDerivedState();
+  this.render();
+}
+
+
 
 recomputeDerivedState() {
+  const visibleTrades = this.tradesData.filter(t => !t.excluded);
 
-    this._visibleTrades = this.tradesData.filter(t => !t.excluded);
+  const plByTradeId = new Map(
+    visibleTrades.map(t => [t.id, this.calculatePL(t)])
+  );
 
-    // Calculate P/L per trade
-    this._plByTradeId = new Map(
-        this._visibleTrades.map(t => [t.id, this.calculatePL(t)])
-    );
+  const metrics = this.computeMetrics(visibleTrades, plByTradeId);
+  const summary = this.computeSummary(visibleTrades, plByTradeId, metrics);
 
-        // Keep option-high related derived stats
-    this._derivedStats = {
-        winLossByDay: this.countWinsLossesByDay(this.tradesData, this._plByTradeId),
-        tradesByDay: this.countTradesByDay(this.tradesData),
-        plByDayBought: this.plByDayBought(this.tradesData, this.state.selectedSellPrice),
-        plByDaySold: this.plByDaySold(this.tradesData, this.state.selectedSellPrice),
-        plByTradeId: this._plByTradeId
-    };
-
-    // Aggregate general stats
-    this._stats = this.aggregateTradeStats(
-        this._plByTradeId
-    );
+  this.setState({
+    visibleTrades,
+    plByTradeId,
+    metrics,
+    summary
+  });
 }
+
+computeMetrics(trades, plByTradeId) {
+  return {
+    winLossByDay: this.countWinsLossesByDay(trades, plByTradeId),
+    tradesByDay: this.countTradesByDay(trades),
+    plByDayBought: this.plByDayBought(trades, plByTradeId),
+    plByDaySold: this.plByDaySold(trades, plByTradeId)
+  };
+}
+
+computeSummary(trades, plByTradeId, metrics) {
+  const summary = trades.reduce(
+    (acc, trade) => {
+      const { dollars } = plByTradeId.get(trade.id);
+
+      acc.totalProfit += dollars;
+      acc.totalCost += trade.avgEntry * 100;
+
+      if (!trade.treatAsLoss && dollars > 0) acc.winTradeCount++;
+      else acc.lossTradeCount++;
+
+      if (trade.optionType === "call") acc.calls++;
+      if (trade.optionType === "put") acc.puts++;
+
+      const isSameDay =
+        trade.tradeDateTime?.toDateString() ===
+        trade.expireDateTime?.toDateString();
+
+      if (!isSameDay) {
+        acc.swings++;
+        if (!trade.treatAsLoss && this.isSwingDayTrade(trade)) {
+          acc.swingsDay++;
+        }
+      } else {
+        acc.zeroDTE++;
+      }
+
+      return acc;
+    },
+    {
+      totalProfit: 0,
+      totalCost: 0,
+      calls: 0,
+      puts: 0,
+      swings: 0,
+      swingsDay: 0,
+      zeroDTE: 0,
+      winTradeCount: 0,
+      lossTradeCount: 0
+    }
+  );
+
+  summary.totalPercent = summary.totalCost
+    ? (summary.totalProfit / summary.totalCost) * 100
+    : 0;
+
+  const { winRatio, weightedWinRatio } =
+    this.calculateWinRatios(metrics, plByTradeId);
+
+  summary.winRatio = winRatio;
+  summary.weightedWinRatio = weightedWinRatio;
+
+  const timeStats = this.calculateOptionHighTimeStats(trades);
+  summary.avgMs = timeStats.high.avg;
+  summary.medianMs = timeStats.high.median;
+  summary.avgHL = timeStats.highLow.avg;
+  summary.medianHL = timeStats.highLow.median;
+
+  // passthroughs used by UI
+  summary.tradesByDay = metrics.tradesByDay;
+  summary.plByDayBought = metrics.plByDayBought;
+  summary.plByDaySold = metrics.plByDaySold;
+
+  return summary;
+}
+
+
+
+
 
 
 render() {
     this.renderStats();
-    this.renderTrades(this.tradesData, this._plByTradeId);
+    this.renderTrades(this.tradesData, this.derived.plByTradeId);
 }
 
 
- aggregateTradeStats(plByTradeId) {
-
-    // ---------- PRIMARY STATS ----------
+ aggregateTradeStats(plByTradeId, visibleTrades, derivedStats) {
     const stats = {
         totalProfit: 0,
         totalCost: 0,
         totalPercent: 0,
-
         calls: 0,
         puts: 0,
-
         swings: 0,
         swingsDay: 0,
         zeroDTE: 0,
-
         winTradeCount: 0,
         lossTradeCount: 0
     };
 
-    // ---------- SINGLE PASS ----------
-    this._visibleTrades.forEach(t => {
+    visibleTrades.forEach(t => {
         const { dollars } = plByTradeId.get(t.id);
 
         stats.totalProfit += dollars;
         stats.totalCost += t.avgEntry * 100;
 
-        if (!t.treatAsLoss && dollars > 0) {
-            stats.winTradeCount++;
-        } else {
-            stats.lossTradeCount++;
-        }
+        if (!t.treatAsLoss && dollars > 0) stats.winTradeCount++;
+        else stats.lossTradeCount++;
 
         if (t.optionType.toLowerCase() === "call") stats.calls++;
         if (t.optionType.toLowerCase() === "put") stats.puts++;
 
         if (t.tradeDateTime.toDateString() !== t.expireDateTime.toDateString()) {
             stats.swings++;
-            if (!t.treatAsLoss && this.isSwingDayTrade(t)) {
-                stats.swingsDay++;
-            }
+            if (!t.treatAsLoss && this.isSwingDayTrade(t)) stats.swingsDay++;
         }
 
-        if (
-            t.tradeDateTime.toDateString() ===
-            t.expireDateTime.toDateString()
-        ) {
+        if (t.tradeDateTime.toDateString() === t.expireDateTime.toDateString()) {
             stats.zeroDTE++;
         }
     });
 
-    // ---------- DERIVED TOTALS ----------
     stats.totalPercent = stats.totalCost
         ? (stats.totalProfit / stats.totalCost) * 100
         : 0;
 
-    // ---------- RATIOS FROM STATE ----------
-    const { winRatio, weightedWinRatio } =
-        this.calculateWinRatiosFromState();
-
+    const { winRatio, weightedWinRatio } = this.calculateWinRatiosFromState(derivedStats);
     stats.winRatio = winRatio;
     stats.weightedWinRatio = weightedWinRatio;
 
-    // ---------- TIME STATS ----------
-    const timeStats = this.calculateOptionHighTimeStats(this._visibleTrades);
-
+    const timeStats = this.calculateOptionHighTimeStats(visibleTrades);
     stats.avgMs = timeStats.high.avg;
     stats.medianMs = timeStats.high.median;
     stats.avgHL = timeStats.highLow.avg;
     stats.medianHL = timeStats.highLow.median;
 
-    // ---------- ATTACH DAY STATS ----------
-    stats.tradesByDay = this._derivedStats.tradesByDay;
-    stats.plByDayBought = this._derivedStats.plByDayBought;
-    stats.plByDaySold = this._derivedStats.plByDaySold;
+    stats.tradesByDay = derivedStats.tradesByDay;
+    stats.plByDayBought = derivedStats.plByDayBought;
+    stats.plByDaySold = derivedStats.plByDaySold;
 
     return stats;
 }
+
 
 countWinsLossesByDay(trades, plByTradeId) {
     const days = {
@@ -366,51 +461,53 @@ countWinsLossesByDay(trades, plByTradeId) {
 }
 
 
-calculateWinRatiosFromState() {
-    const { winLossByDay, plByTradeId } = this._derivedStats;
+calculateWinRatios(metrics, plByTradeId) {
+  const { winLossByDay } = metrics;
 
-    let wins = 0;
-    let losses = 0;
+  const { wins, losses } = Object.values(winLossByDay).reduce(
+    (acc, d) => ({
+      wins: acc.wins + d.wins,
+      losses: acc.losses + d.losses
+    }),
+    { wins: 0, losses: 0 }
+  );
 
-    Object.values(winLossByDay).forEach(d => {
-        wins += d.wins;
-        losses += d.losses;
-    });
+  const totalTrades = wins + losses;
+  const winRatio = totalTrades ? (wins / totalTrades) * 100 : 0;
 
-    const totalTrades = wins + losses;
-    const winRatio = totalTrades ? (wins / totalTrades) * 100 : 0;
+  let totalAbsPL = 0;
+  let positivePL = 0;
 
-    let totalAbsPL = 0;
-    let positivePL = 0;
+  plByTradeId.forEach(({ dollars }) => {
+    totalAbsPL += Math.abs(dollars);
+    if (dollars > 0) positivePL += dollars;
+  });
 
-    plByTradeId.forEach(({ dollars }) => {
-        totalAbsPL += Math.abs(dollars);
-        if (dollars > 0) positivePL += dollars;
-    });
+  const weightedWinRatio = totalAbsPL
+    ? (positivePL / totalAbsPL) * 100
+    : 0;
 
-    const weightedWinRatio = totalAbsPL
-        ? (positivePL / totalAbsPL) * 100
-        : 0;
-
-    return { winRatio, weightedWinRatio };
+  return { winRatio, weightedWinRatio };
 }
 
-    getFilteredHighs(trade) {
-        if (trade.treatAsLoss || !trade.optionPriceHighs?.length) return [];
 
-        const {
-            maxGainPercent,
-            maxHighTime,
-            maxDaysPassed
-        } = this.state;
+getFilteredHighs(trade) {
+    if (trade.treatAsLoss || !trade.optionPriceHighs?.length) return [];
 
-        let highs = [...trade.optionPriceHighs];
-        highs = this.filterHighsByMaxGain(highs, trade.avgEntry, maxGainPercent);
-        highs = this.filterHighsByMaxHighTime(highs, maxHighTime);
-        highs = this.filterHighsByMaxDaysPassed(highs,maxDaysPassed);
+    const {
+        maxGainPercent,
+        maxHighTime,
+        selectedMaxDaysPassed
+    } = this.view; // ✅ updated to use view slice
 
-        return highs;
-    }
+    let highs = [...trade.optionPriceHighs];
+    highs = this.filterHighsByMaxGain(highs, trade.avgEntry, maxGainPercent);
+    highs = this.filterHighsByMaxHighTime(highs, maxHighTime);
+    highs = this.filterHighsByMaxDaysPassed(highs, selectedMaxDaysPassed);
+
+    return highs;
+}
+
 
 
     filterHighsByMaxGain(highs, avgEntry, maxGainPercent) {
@@ -428,10 +525,10 @@ calculateWinRatiosFromState() {
     }
 
 
-filterHighsByMaxDaysPassed(highs, maxDaysPassed) {
-    if (!Number.isFinite(maxDaysPassed)) return highs; // no filter if not finite
+filterHighsByMaxDaysPassed(highs, selectedMaxDaysPassed) {
+    if (!Number.isFinite(selectedMaxDaysPassed)) return highs; // no filter if not finite
 
-    return highs.filter(h => Number.isFinite(h.daysPassed) && h.daysPassed <= maxDaysPassed);
+    return highs.filter(h => Number.isFinite(h.daysPassed) && h.daysPassed <= selectedMaxDaysPassed);
 }
 
 
@@ -452,57 +549,58 @@ filterHighsByMaxDaysPassed(highs, maxDaysPassed) {
         return [...highs].sort((a, b) => b.price - a.price);
     }
 
-    getHighestHighPrice(highs) {
-        const { selectedSellPrice } = this.state;
-        if (!highs?.length) return null;
+getHighestHighPrice(highs) {
+    const { selectedSellPrice } = this.view; // ✅ use view slice
+    if (!highs?.length) return null;
 
-        const prices = highs.map(h => h.price).sort((a, b) => b - a);
+    const prices = highs.map(h => h.price).sort((a, b) => b - a);
 
-        if (selectedSellPrice === "avg") {
-            const avg = calculateAverage(prices);
-            return { price: avg };
-        }
-
-        if (selectedSellPrice === "median") {
-            const mid = Math.floor(prices.length / 2);
-            const median = prices.length % 2 === 0
-                ? (prices[mid - 1] + prices[mid]) / 2
-                : prices[mid];
-            return { price: median };
-        }
-
-        // numeric index
-        const idx = Math.min(selectedSellPrice, prices.length - 1);
-        return highs.find(h => h.price === prices[idx]);
+    if (selectedSellPrice === "avg") {
+        const avg = calculateAverage(prices);
+        return { price: avg };
     }
 
-
-
-
-    calculatePL(trade) {
-        if (trade.treatAsLoss) return { dollars: -trade.avgEntry * 100, percent: -100 };
-
-        let high;
-        if (trade.highOverrideId) {
-            high = trade.optionPriceHighs.find(h => h.id === trade.highOverrideId);
-        }
-
-        if (!high) {
-            high = this.getHighestHighPrice(this.getFilteredHighs(trade));
-        }
-
-        if (!high) {
-            const lossPercent = -this.state.percentLossModifier;
-            const dollars = (lossPercent / 100) * trade.avgEntry * 100;
-            return { dollars, percent: lossPercent };
-        }
-
-
-        const dollars = (high.price - trade.avgEntry) * 100;
-        const percent = ((high.price - trade.avgEntry) / trade.avgEntry) * 100;
-
-        return { dollars, percent };
+    if (selectedSellPrice === "median") {
+        const mid = Math.floor(prices.length / 2);
+        const median = prices.length % 2 === 0
+            ? (prices[mid - 1] + prices[mid]) / 2
+            : prices[mid];
+        return { price: median };
     }
+
+    // numeric index
+    const idx = Math.min(selectedSellPrice, prices.length - 1);
+    return highs.find(h => h.price === prices[idx]);
+}
+
+
+
+
+
+calculatePL(trade) {
+    if (trade.treatAsLoss) return { dollars: -trade.avgEntry * 100, percent: -100 };
+
+    let high;
+    if (trade.highOverrideId) {
+        high = trade.optionPriceHighs.find(h => h.id === trade.highOverrideId);
+    }
+
+    if (!high) {
+        high = this.getHighestHighPrice(this.getFilteredHighs(trade));
+    }
+
+    if (!high) {
+        const lossPercent = -this.view.percentLossModifier; // ✅ use view slice
+        const dollars = (lossPercent / 100) * trade.avgEntry * 100;
+        return { dollars, percent: lossPercent };
+    }
+
+    const dollars = (high.price - trade.avgEntry) * 100;
+    const percent = ((high.price - trade.avgEntry) / trade.avgEntry) * 100;
+
+    return { dollars, percent };
+}
+
 
     getOptionHighTimeDiffs(trades) {
         return trades.reduce(
@@ -563,46 +661,49 @@ filterHighsByMaxDaysPassed(highs, maxDaysPassed) {
         return days;
     }
 
-    plByDayBought(trades) {
-        const daysPL = { Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0 };
+plByDayBought(trades, plByTradeId) {
+    const daysPL = { Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0 };
 
-        trades.forEach(t => {
-            const day = getDayName(t.tradeDateTime);
-            if (daysPL[day] === undefined) return;
+    trades.forEach(t => {
+        const day = getDayName(t.tradeDateTime);
+        if (daysPL[day] === undefined) return;
 
-            const { dollars } = this._plByTradeId.get(t.id);
+        const pl = plByTradeId.get(t.id);
+        if (!pl) return;
 
-            daysPL[day] += dollars;
-        });
+        daysPL[day] += pl.dollars;
+    });
 
-        return daysPL;
-    }
+    return daysPL;
+}
 
 
-    plByDaySold(trades) {
-        const daysPL = { Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0 };
 
-        trades.forEach(t => {
-            const { dollars } = this._plByTradeId.get(t.id);
+plByDaySold(trades, plByTradeId) {
+    const daysPL = { Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0 };
 
-            const highs = this.getFilteredHighs(t);
-            const selectedHigh = this.getHighestHighPrice(highs);
+    trades.forEach(t => {
+        const pl = plByTradeId.get(t.id);
+        if (!pl) return;
 
-            // Safe way: use highDateTime if it exists, otherwise fallback to expireDateTime or tradeDateTime
-            let day;
-            if (selectedHigh?.highDateTime) {
-                day = getDayName(selectedHigh.highDateTime);
-            } else {
-                day = getDayName(t.expireDateTime || t.tradeDateTime);
-            }
+        const highs = this.getFilteredHighs(t);
+        const selectedHigh = this.getHighestHighPrice(highs);
 
-            if (daysPL[day] !== undefined) {
-                daysPL[day] += dollars;
-            }
-        });
+        let day;
+        if (selectedHigh?.highDateTime) {
+            day = getDayName(selectedHigh.highDateTime);
+        } else {
+            day = getDayName(t.expireDateTime || t.tradeDateTime);
+        }
 
-        return daysPL;
-    }
+        if (daysPL[day] !== undefined) {
+            daysPL[day] += pl.dollars;
+        }
+    });
+
+    return daysPL;
+}
+
 
     calculateHighStats(highs, avgEntry) {
         if (!highs.length || !avgEntry) {
@@ -670,8 +771,8 @@ filterHighsByMaxDaysPassed(highs, maxDaysPassed) {
                 </div>
 
                 <div class="filters__filter">
-                    <label>Days Passed</label>
-                    <select id="days-passed-filter" data-filter="maxDaysPassed"></select>
+                    <label>Max Days Passed</label>
+                    <select id="max-days-passed-filter" data-filter="selectedMaxDaysPassed"></select>
                 </div>
 
                 <div class="filters__filter">
@@ -742,7 +843,7 @@ filterHighsByMaxDaysPassed(highs, maxDaysPassed) {
 
 renderStats() {
 
-    const stats = this._stats;
+    const stats = this.derived.summary;
     if (!stats) return;
 
     const { statTotalsEl, statsEl } = this.el;
@@ -865,7 +966,7 @@ renderStats() {
 
 
 renderTradesWinLossByDay() {
-    const winLossByDay = this._derivedStats.winLossByDay;
+    const winLossByDay = this.derived.metrics.winLossByDay;
     if (!winLossByDay) return "";
 
     return Object.entries(winLossByDay)
@@ -955,27 +1056,26 @@ renderTradesWinLossByDay() {
         }).join("");
     }
 
-    getHighExclusionState(trade, high) {
-        const { maxHighTime, maxDaysPassed, maxGainPercent } = this.state;
+getHighExclusionState(trade, high) {
+    const { maxHighTime, selectedMaxDaysPassed, maxGainPercent } = this.view; // ✅ use view slice
 
-        const percent = calculatePercentFromPrice(trade.avgEntry, high.price);
+    const percent = calculatePercentFromPrice(trade.avgEntry, high.price);
 
-        const highTime = high.highDateTime.toTimeString().slice(0, 5);
+    const highTime = high.highDateTime.toTimeString().slice(0, 5);
+    const daysPassed = high.daysPassed;
 
-        const daysPassed = high.daysPassed; 
+    return {
+        isAfterMaxGain:
+            Number.isFinite(maxGainPercent) && percent > maxGainPercent,
 
+        isAfterMaxTime:
+            maxHighTime != null && highTime > maxHighTime,
 
-        return {
-            isAfterMaxGain:
-                Number.isFinite(maxGainPercent) && percent > maxGainPercent,
+        isAfterDaysPassed:
+            Number.isFinite(selectedMaxDaysPassed) && daysPassed > selectedMaxDaysPassed
+    };
+}
 
-            isAfterMaxTime:
-                maxHighTime != null && highTime > maxHighTime,
-
-            isAfterDaysPassed:
-                Number.isFinite(maxDaysPassed) && daysPassed > maxDaysPassed
-        };
-    }
 
 
     renderHighItem({ trade, high, highlightHigh }) {
@@ -1057,8 +1157,9 @@ renderTradesWinLossByDay() {
             // Highlight only if no override high exists
             const highlightOverrideExists = !!trade.highOverrideId;
 
-            const avgHighlightClass = !highlightOverrideExists && this.state.selectedSellPrice === "avg" ? "option-high--highest" : "";
-            const medianHighlightClass = !highlightOverrideExists && this.state.selectedSellPrice === "median" ? "option-high--highest" : "";
+            const avgHighlightClass = !highlightOverrideExists && this.view.selectedSellPrice === "avg";
+
+            const medianHighlightClass = !highlightOverrideExists && this.view.selectedSellPrice === "median" ? "option-high--highest" : "";
 
             highStatsHTML = `
     <div class="option-high-stats">
@@ -1244,7 +1345,7 @@ updateDayFilter() {
     const daysOfWeek = this.availableFilters?.daysOfWeek || [];
     this.updateChoices(this.dayFilter, {
         values: daysOfWeek,
-        selected: this.state.selectedDays,
+        selected: this.query.selectedDays,
         sort: false 
     });
 }
@@ -1255,7 +1356,7 @@ updateTickerFilter() {
     const tickers = this.availableFilters?.tickers || [];
     this.updateChoices(this.tickerFilter, {
         values: tickers,
-        selected: this.state.selectedTickers
+        selected: this.query.selectedTickers
     });
 }
 
@@ -1264,7 +1365,7 @@ updateTradeTypeFilter() {
     const types = this.availableFilters?.tradeTypes || [];
     this.updateChoices(this.tradeTypeFilter, {
         values: types,
-        selected: this.state.selectedTradeTypes,
+        selected: this.query.selectedTradeTypes,
         labelMap: {
             swing: "Swing",
             "swing-day": "Swing → Day",
@@ -1286,8 +1387,8 @@ updateTradeTypeFilter() {
         const dataMin = new Date(Math.min(...tradeDates));
         const dataMax = new Date(Math.max(...tradeDates));
 
-        let nextStart = this.state.startDate;
-        let nextEnd = this.state.endDate;
+        let nextStart = this.query.startDate;
+        let nextEnd = this.query.endDate;
 
         // Expand outward only
         if (!nextStart || dataMin < nextStart) {
@@ -1299,10 +1400,10 @@ updateTradeTypeFilter() {
         }
 
         const changed =
-            !this.state.startDate ||
-            !this.state.endDate ||
-            nextStart.getTime() !== this.state.startDate.getTime() ||
-            nextEnd.getTime() !== this.state.endDate.getTime();
+            !this.query.startDate ||
+            !this.query.endDate ||
+            nextStart.getTime() !== this.query.startDate.getTime() ||
+            nextEnd.getTime() !== this.query.endDate.getTime();
 
         if (!changed) return;
 
@@ -1331,7 +1432,7 @@ updateTradeTypeFilter() {
 
         if (maxHighs === 0) {
             sellPriceFilterEl.innerHTML = "";
-            if (this.state.selectedSellPrice !== 0) this.setState({ selectedSellPrice: 0 });
+            if (this.view.selectedSellPrice !== 0) this.setState({ selectedSellPrice: 0 });
             return;
         }
 
@@ -1354,7 +1455,7 @@ updateTradeTypeFilter() {
         sellPriceFilterEl.innerHTML = options.join("");
 
         // Clamp selection
-        const sel = this.state.selectedSellPrice;
+        const sel = this.state.view.selectedSellPrice;
         if (sel !== "avg" && sel !== "median" && sel >= maxHighs) {
             this.setState({ selectedSellPrice: 0 });
             sellPriceFilterEl.value = "0";
@@ -1383,7 +1484,7 @@ updateDaysPassedFilter() {
     // Default selected: highest value
     const defaultValue = Math.max(...daysPassedArray);
     daysPassedFilterEl.value = defaultValue;
-    this.setState({ maxDaysPassed: parseInt(daysPassedFilterEl.value, 10) });
+    this.setState({ selectedMaxDaysPassed: parseInt(daysPassedFilterEl.value, 10) });
 }
 
 

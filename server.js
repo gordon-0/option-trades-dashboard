@@ -114,7 +114,7 @@ app.post("/trades/filtered", (req, res) => {
     tickers,
     tradeTypes,
     daysOfWeek,
-    sortBy
+    sortOrder
   } = req.body;
 
   let trades = getAllTrades();
@@ -131,7 +131,7 @@ app.post("/trades/filtered", (req, res) => {
   trades = filterByTickers(trades, tickers);
   trades = filterByTradeTypes(trades, tradeTypes);
   trades = filterByDaysOfWeek(trades, daysOfWeek);
-  trades = sortTradesByDate(trades, sortBy);
+  trades = sortTradesByDate(trades, sortOrder);
 
   res.json({
     trades,
