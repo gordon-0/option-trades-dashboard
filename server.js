@@ -16,6 +16,7 @@ const {
 
 const {
   calculateDaysPassedForTrade,
+  getTradesMinMaxDates
 } = require("./tradesHelpers");
 
 
@@ -79,31 +80,48 @@ app.post("/trades/:id/high", (req, res) => {
   const { high_datetime, price } = req.body;
 
   if (!high_datetime || typeof price !== "number") {
-    return res.status(400).json({ error: "Missing or invalid high_datetime or price" });
+    return res.status(400).json({
+      error: "Missing or invalid high_datetime or price"
+    });
   }
 
   const parsedDate = new Date(high_datetime);
   if (Number.isNaN(parsedDate.getTime())) {
-    return res.status(400).json({ error: "Invalid high_datetime format" });
+    return res.status(400).json({
+      error: "Invalid high_datetime format"
+    });
   }
 
   const trade = findTradeById(tradeId);
-  if (!trade) return res.status(404).json({ error: "Trade not found" });
+  if (!trade) {
+    return res.status(404).json({ error: "Trade not found" });
+  }
 
-  if (!trade.option_price_highs) trade.option_price_highs = [];
+  if (!trade.option_price_highs) {
+    trade.option_price_highs = [];
+  }
 
+  // 1️⃣ Create the high
   const newHigh = {
     id: crypto.randomUUID(),
     high_datetime: parsedDate.toISOString(),
     price
   };
 
+  // 2️⃣ Mutate trade
   trade.option_price_highs.push(newHigh);
+
+  // 3️⃣ IMPORTANT: compute daysPassed using your existing helper
+  calculateDaysPassedForTrade(trade);
+
+  // 4️⃣ Persist trade
   updateTrade(tradeId, trade);
 
+  // 5️⃣ Return the fully computed high (now includes daysPassed)
   console.log(`Added high price to trade ${tradeId}:`, newHigh);
   res.status(201).json(newHigh);
 });
+
 
 // ===== MASTER FILTER ENDPOINT WITH LOGGING =====
 app.post("/trades/filtered", (req, res) => {
@@ -124,6 +142,8 @@ app.post("/trades/filtered", (req, res) => {
     calculateDaysPassedForTrade(trade);
   });
 
+  const tradesMinMaxDates = getTradesMinMaxDates(trades);
+
   const availableFilters = getAvailableFilters(trades);
 
   trades = filterByDate(trades, startDate, endDate);
@@ -135,7 +155,8 @@ app.post("/trades/filtered", (req, res) => {
 
   res.json({
     trades,
-    availableFilters
+    availableFilters,
+    tradesMinMaxDates
   });
 });
 

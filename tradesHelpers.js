@@ -1,5 +1,23 @@
 // tradesHelpers.js
 
+function getTradesMinMaxDates(trades) {
+  const dates = trades
+    .map(t => t.trade_datetime)
+    .filter(Boolean)
+    .map(d => new Date(d))
+    .filter(d => !isNaN(d));
+
+  if (!dates.length) {
+    return { min: null, max: null };
+  }
+
+  return {
+    min: new Date(Math.min(...dates)).toISOString(),
+    max: new Date(Math.max(...dates)).toISOString()
+  };
+}
+
+
 // ===== Calculate days passed =====
 function calculateDaysPassedForTrade(trade) {
     if (!trade.trade_datetime || !trade.option_price_highs) return;
@@ -12,7 +30,7 @@ function calculateDaysPassedForTrade(trade) {
         const highDate = new Date(high.high_datetime);
         const diffMs = highDate - tradeDate;
         const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        high.daysPassed = days >= 0 ? days : 0;
+        high.days_passed = days >= 0 ? days : 0;
     });
 }
 
@@ -49,5 +67,6 @@ function getTradeTypes(trade) {
 module.exports = {
     getTradeTypes,
     isSwingDayTrade,
-    calculateDaysPassedForTrade
+    calculateDaysPassedForTrade,
+    getTradesMinMaxDates
 };
