@@ -28,8 +28,8 @@ function getAvailableFilters(trades) {
         // Collect daysPassed from option_price_highs
         if (trade.option_price_highs?.length) {
             trade.option_price_highs.forEach(high => {
-                if (typeof high.daysPassed === "number") {
-                    daysPassedSet.add(high.daysPassed);
+                if (typeof high.days_passed === "number") {
+                    daysPassedSet.add(high.days_passed);
                 }
             });
         }

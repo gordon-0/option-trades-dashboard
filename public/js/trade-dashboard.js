@@ -157,6 +157,8 @@ class TradeDashboard {
 
             const data = await res.json();
 
+            console.log(data, 'data');
+
             this.availableFilters = data.availableFilters || {};
 
             if (data.tradesMinMaxDates?.min && data.tradesMinMaxDates?.max) {
