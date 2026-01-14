@@ -8,27 +8,6 @@ import {
     calculatePercentFromPrice
 } from "./logic/helpers.js";
 
-import {
-    calculateTradeTotals,
-    calculateTradeOutcomes,
-    calculateTradeComposition,
-    countWinsLossesByDay,
-    calculateWinRatios,
-    countTradesByDay,
-    calcPlByDayBought,
-    calcPlByDaySold
-} from "./logic/tradeCalculations.js";
-
-import { renderDashboardLayoutTemplate } from "./ui/templates/dashboardLayoutTemplate.js";
-
-import {
-    renderStatTotalsTemplate,
-    renderStatsTemplate
-} from "./ui/templates/statsTemplates.js";
-
-import { renderTradeCardTemplate } from "./ui/templates/tradeCardTemplate.js";
-
-
 class TradeDashboard {
 
     static SORT_ORDER_STORAGE_KEY = "OptionTradeDashboard.sortOrder";
@@ -37,7 +16,6 @@ class TradeDashboard {
         startDate: v => v ? new Date(v) : null,
         endDate: v => v ? new Date(v) : null,
         maxGainPercent: v => v === "" ? null : parseFloat(v),
-        minGainPercent: v => v === "" ? null : parseFloat(v),
         selectedMaxDaysPassed: v => v === "" ? null : parseInt(v, 10),
         selectedSellPrice: v => {
             if (v === "avg" || v === "median") return v;
@@ -54,6 +32,7 @@ class TradeDashboard {
         this.tradesMinMaxDates = null;
         this.optionCardContainer = document.getElementById("option-cards-container");
         this.mainDashboardCard = document.getElementById("main-dashboard-card");
+        this.initTemplates();
 
         const storedSortOrder = localStorage.getItem(
             TradeDashboard.SORT_ORDER_STORAGE_KEY
@@ -76,7 +55,6 @@ class TradeDashboard {
                 selectedMaxDaysPassed: null,
                 maxHighTime: null,
                 maxGainPercent: null,
-                minGainPercent: null,
                 percentLossModifier: 100
             }
         };
@@ -104,7 +82,7 @@ class TradeDashboard {
             await this.loadTrades({ updateFilters: true });
 
             this.isBootstrapping = false;
-            this.render(["allStats", "allTrades"]);
+            this.render();
         } catch (err) {
             console.error("Error initializing dashboard:", err);
         }
@@ -138,12 +116,12 @@ class TradeDashboard {
             }
 
             this.derived = this.recomputeDerivedState();
-            this.render(["allStats", "allTrades"]);
+            this.render({ stats: true, trades: true });
         } catch (err) {
             console.error("Error loading trades:", err);
             this.tradesData = [];
             this.derived = this.recomputeDerivedState();
-            this.render(["allStats", "allTrades"]);
+            this.render({ stats: true, trades: true });
         }
     }
 
@@ -227,38 +205,6 @@ class TradeDashboard {
         }));
     }
 
-    renderRegistry = {
-        allStats: () => {
-            this.renderStats();
-        },
-
-        allTrades: () => {
-            this.renderAllTrades();
-        },
-
-        trade: ({ tradeId }) => {
-            if (!tradeId) return;
-
-            const trade = this.tradesData.find(trade => trade.id === tradeId);
-            if (trade) {
-                this.rerenderTrade(trade);
-            }
-        }
-    };
-
-    renderDashboardLayout() {
-        const tickers = [...new Set(this.tradesData.map(trade => trade.ticker))].sort();
-        const tickerOptions = tickers
-            .map(ticker => `<option value="${ticker}">${ticker}</option>`)
-            .join("");
-
-        this.mainDashboardCard.innerHTML = renderDashboardLayoutTemplate({
-            tickerOptions
-        });
-    }
-
-
-
     cacheEls() {
         this.el = {
             startDateFilterEl: document.getElementById("start-date"),
@@ -267,7 +213,6 @@ class TradeDashboard {
             sellPriceFilterEl: document.getElementById("sell-price-select"),
             verifiedFilterEl: document.getElementById("verified-filter"),
             maxGainPercentFilterEl: document.getElementById("max-gain-percent-filter"),
-            minGainPercentFilterEl: document.getElementById("min-gain-percent-filter"),
             maxHighTimeFilterEl: document.getElementById("max-high-time"),
             daysPassedFilterEl: document.getElementById("max-days-passed-filter"),
             tradeTypeFilterEl: document.getElementById("trade-type-filter"),
@@ -323,7 +268,7 @@ class TradeDashboard {
         this.derived = this.recomputeDerivedState();
 
         if (!this.isBootstrapping) {
-            this.render(["allStats", "allTrades"]);
+            this.render({ stats: true, trades: true });
         }
     }
 
@@ -350,118 +295,200 @@ class TradeDashboard {
 
     computeMetrics(trades, plByTradeId) {
         return {
-            winLossByDay: countWinsLossesByDay(trades, plByTradeId),
-            tradesByDay: countTradesByDay(trades),
-            plByDayBought: calcPlByDayBought(trades, plByTradeId),
-            plByDaySold: calcPlByDaySold(trades, plByTradeId, this.getFilteredHighs.bind(this), this.getHighestHighPrice.bind(this))
+            winLossByDay: this.countWinsLossesByDay(trades, plByTradeId),
+            tradesByDay: this.countTradesByDay(trades),
+            plByDayBought: this.plByDayBought(trades, plByTradeId),
+            plByDaySold: this.plByDaySold(trades, plByTradeId)
         };
     }
 
-computeSummary(trades, plByTradeId, metrics) {
-    const totals = calculateTradeTotals(trades, plByTradeId);
-    const outcomes = calculateTradeOutcomes(trades, plByTradeId);
-    const composition = calculateTradeComposition(trades, this.isSwingDayTrade);
-    const duration = this.calculateTradeDurations(trades);
-    const { winRatio, weightedWinRatio } = calculateWinRatios(metrics, plByTradeId);
+    computeSummary(trades, plByTradeId, metrics) {
+        const totals = this.calculateTradeTotals(trades, plByTradeId);
+        const outcomes = this.calculateTradeOutcomes(trades, plByTradeId);
+        const composition = this.calculateTradeComposition(trades);
+        const duration = this.calculateTradeDurations(trades);
+        const { winRatio, weightedWinRatio } = this.calculateWinRatios(
+            metrics,
+            plByTradeId
+        );
 
-    const avgMedianPL = this.calculateAvgMedianPL(trades, plByTradeId);
-
-    return {
-        // Money totals
-        totalProfit: totals.profit,
-        totalCost: totals.cost,
-        totalPercent: totals.percent,
-
-        // ✅ NEW: per-trade stats
-        avgProfitPerTrade: avgMedianPL.avgPL,
-        medianProfitPerTrade: avgMedianPL.medianPL,
-        avgProfitPerTradePercent: avgMedianPL.avgPLPercent,
-        medianProfitPerTradePercent: avgMedianPL.medianPLPercent,
-
-        // Outcomes
-        winTradeCount: outcomes.wins,
-        lossTradeCount: outcomes.losses,
-        winRatio,
-        weightedWinRatio,
-
-        // Composition
-        calls: composition.calls,
-        puts: composition.puts,
-        swings: composition.swings,
-        swingsDay: composition.swingsDay,
-        zeroDTE: composition.zeroDTE,
-
-        // Durations
-        ...duration,
-
-        // UI passthroughs
-        tradesByDay: metrics.tradesByDay,
-        plByDayBought: metrics.plByDayBought,
-        plByDaySold: metrics.plByDaySold
-    };
-}
-
-
-    calculateAvgMedianPL(trades, plByTradeId) {
-    if (!trades.length) {
         return {
-            avgPL: 0,
-            medianPL: 0,
-            avgPLPercent: 0,
-            medianPLPercent: 0
+            // Money
+
+            totalProfit: totals.profit,
+            totalCost: totals.cost,
+            totalPercent: totals.percent,
+
+            // Outcomes
+
+            winTradeCount: outcomes.wins,
+            lossTradeCount: outcomes.losses,
+            winRatio,
+            weightedWinRatio,
+
+            // Composition
+
+            calls: composition.calls,
+            puts: composition.puts,
+            swings: composition.swings,
+            swingsDay: composition.swingsDay,
+            zeroDTE: composition.zeroDTE,
+
+            // Durations
+
+            ...duration,
+
+            // UI passthroughs
+
+            tradesByDay: metrics.tradesByDay,
+            plByDayBought: metrics.plByDayBought,
+            plByDaySold: metrics.plByDaySold
         };
     }
 
-    const dollars = [];
-    const percents = [];
+    render({ stats = false, trades = false, tradeIds = null } = {}) {
+        if (stats) {
+            this.renderStats();
+        }
 
-    for (const t of trades) {
-        const pl = plByTradeId.get(t.id);
-        if (!pl) continue;
-
-        dollars.push(pl.dollars);
-        percents.push(pl.percent);
-    }
-
-    return {
-        avgPL: calculateAverage(dollars),
-        medianPL: calculateMedian(dollars),
-        avgPLPercent: calculateAverage(percents),
-        medianPLPercent: calculateMedian(percents)
-    };
-}
-
-
-    render(target, payload = {}) {
-        if (!target) return;
-
-        const targets = Array.isArray(target) ? target : [target];
-
-        targets.forEach(key => {
-            const handler = this.renderRegistry[key];
-
-            if (!handler) {
-                console.warn(`No render handler registered for "${key}"`);
-                return;
+        if (trades) {
+            if (Array.isArray(tradeIds) && tradeIds.length) {
+                tradeIds.forEach(id => {
+                    const trade = this.tradesData.find(t => t.id === id);
+                    if (trade) this.rerenderTrade(trade);
+                });
+            } else {
+                this.renderAllTrades();
             }
-
-            handler(payload);
-        });
+        }
     }
-
 
     getSortedHighs(trade) {
         if (!trade.optionPriceHighs?.length) return [];
         return [...trade.optionPriceHighs].sort((a, b) => b.price - a.price);
     }
 
-filterHighsByMinGain(highs, avgEntry, minGainPercent) {
-    if (!Number.isFinite(minGainPercent)) return highs;
+    calculateTradeTotals(trades, plByTradeId) {
+        let profit = 0;
+        let cost = 0;
 
-    return highs.filter(
-        h => calculatePercentFromPrice(avgEntry, h.price) >= minGainPercent
-    );
-}
+        for (const trade of trades) {
+            const { dollars } = plByTradeId.get(trade.id);
+            profit += dollars;
+            cost += trade.avgEntry * 100;
+        }
+
+        return {
+            profit,
+            cost,
+            percent: cost ? (profit / cost) * 100 : 0
+        };
+    }
+
+    calculateTradeOutcomes(trades, plByTradeId) {
+        let wins = 0;
+        let losses = 0;
+
+        for (const trade of trades) {
+            const { dollars } = plByTradeId.get(trade.id);
+            if (!trade.treatAsLoss && dollars > 0) wins++;
+            else losses++;
+        }
+
+        return { wins, losses };
+    }
+
+    calculateTradeComposition(trades) {
+        let calls = 0;
+        let puts = 0;
+        let swings = 0;
+        let swingsDay = 0;
+        let zeroDTE = 0;
+
+        for (const trade of trades) {
+            const isSameDay =
+                trade.tradeDateTime?.toDateString() ===
+                trade.expireDateTime?.toDateString();
+
+            if (trade.optionType === "call") calls++;
+            if (trade.optionType === "put") puts++;
+
+            if (isSameDay) {
+                zeroDTE++;
+            } else {
+                swings++;
+                if (!trade.treatAsLoss && this.isSwingDayTrade(trade)) {
+                    swingsDay++;
+                }
+            }
+        }
+
+        return { calls, puts, swings, swingsDay, zeroDTE };
+    }
+
+    calculateTradeDurations(trades) {
+        const timeStats = this.calculateOptionHighTimeStats(trades);
+
+        return {
+            avgMs: timeStats.high.avg,
+            medianMs: timeStats.high.median,
+            avgHL: timeStats.highLow.avg,
+            medianHL: timeStats.highLow.median
+        };
+    }
+
+    countWinsLossesByDay(trades, plByTradeId) {
+        const days = {
+            Monday: { wins: 0, losses: 0 },
+            Tuesday: { wins: 0, losses: 0 },
+            Wednesday: { wins: 0, losses: 0 },
+            Thursday: { wins: 0, losses: 0 },
+            Friday: { wins: 0, losses: 0 }
+        };
+
+        trades.forEach(t => {
+            const day = getDayName(t.tradeDateTime);
+            if (!days[day]) return;
+
+            const { dollars } = plByTradeId.get(t.id);
+            if (!t.treatAsLoss && dollars > 0) {
+                days[day].wins++;
+            } else {
+                days[day].losses++;
+            }
+        });
+
+        return days;
+    }
+
+    calculateWinRatios(metrics, plByTradeId) {
+        const { winLossByDay } = metrics;
+
+        const { wins, losses } = Object.values(winLossByDay).reduce(
+            (acc, d) => ({
+                wins: acc.wins + d.wins,
+                losses: acc.losses + d.losses
+            }),
+            { wins: 0, losses: 0 }
+        );
+
+        const totalTrades = wins + losses;
+        const winRatio = totalTrades ? (wins / totalTrades) * 100 : 0;
+
+        let totalAbsPL = 0;
+        let positivePL = 0;
+
+        plByTradeId.forEach(({ dollars }) => {
+            totalAbsPL += Math.abs(dollars);
+            if (dollars > 0) positivePL += dollars;
+        });
+
+        const weightedWinRatio = totalAbsPL
+            ? (positivePL / totalAbsPL) * 100
+            : 0;
+
+        return { winRatio, weightedWinRatio };
+    }
 
     getFilteredHighs(trade) {
         if (trade.treatAsLoss || !trade.optionPriceHighs?.length) return [];
@@ -469,23 +496,27 @@ filterHighsByMinGain(highs, avgEntry, minGainPercent) {
         const {
             maxGainPercent,
             maxHighTime,
-            minGainPercent,
             selectedMaxDaysPassed
         } = this.view;
 
         // ✅ updated to use view slice
 
         let highs = [...trade.optionPriceHighs];
-        highs = this.filterHighsByMinGain(highs, trade.avgEntry, minGainPercent);
-        highs = this.filterHighsByMaxGain(highs, trade.avgEntry, maxGainPercent);
+        highs = this.filterHighsByMaxGain(
+            highs,
+            trade.avgEntry,
+            maxGainPercent
+        );
         highs = this.filterHighsByMaxHighTime(highs, maxHighTime);
-        highs = this.filterHighsByMaxDaysPassed(highs, selectedMaxDaysPassed);
+        highs = this.filterHighsByMaxDaysPassed(
+            highs,
+            selectedMaxDaysPassed
+        );
 
         return highs;
     }
 
     filterHighsByMaxGain(highs, avgEntry, maxGainPercent) {
-
         if (!Number.isFinite(maxGainPercent)) return highs;
 
         return highs.filter(
@@ -595,32 +626,6 @@ filterHighsByMinGain(highs, avgEntry, minGainPercent) {
         return { dollars, percent };
     }
 
-    calculateOptionHighTimeStats(trades) {
-        const { high, highLow } = this.getOptionHighTimeDiffs(trades);
-
-        return {
-            high: {
-                avg: calculateAverage(high),
-                median: calculateMedian(high)
-            },
-            highLow: {
-                avg: calculateAverage(highLow),
-                median: calculateMedian(highLow)
-            }
-        };
-    }
-
-    calculateTradeDurations(trades) {
-        const timeStats = this.calculateOptionHighTimeStats(trades);
-
-        return {
-            avgMs: timeStats.high.avg,
-            medianMs: timeStats.high.median,
-            avgHL: timeStats.highLow.avg,
-            medianHL: timeStats.highLow.median
-        };
-    }
-
     getOptionHighTimeDiffs(trades) {
         return trades.reduce(
             (acc, trade) => {
@@ -656,6 +661,93 @@ filterHighsByMinGain(highs, avgEntry, minGainPercent) {
         );
     }
 
+
+
+    calculateOptionHighTimeStats(trades) {
+        const { high, highLow } = this.getOptionHighTimeDiffs(trades);
+
+        return {
+            high: {
+                avg: calculateAverage(high),
+                median: calculateMedian(high)
+            },
+            highLow: {
+                avg: calculateAverage(highLow),
+                median: calculateMedian(highLow)
+            }
+        };
+    }
+
+    countTradesByDay(trades) {
+        const days = {
+            Monday: 0,
+            Tuesday: 0,
+            Wednesday: 0,
+            Thursday: 0,
+            Friday: 0
+        };
+
+        trades.forEach(t => {
+            const day = getDayName(t.tradeDateTime);
+            if (days[day] !== undefined) days[day]++;
+        });
+
+        return days;
+    }
+
+    plByDayBought(trades, plByTradeId) {
+        const daysPL = {
+            Monday: 0,
+            Tuesday: 0,
+            Wednesday: 0,
+            Thursday: 0,
+            Friday: 0
+        };
+
+        trades.forEach(t => {
+            const day = getDayName(t.tradeDateTime);
+            if (daysPL[day] === undefined) return;
+
+            const pl = plByTradeId.get(t.id);
+            if (!pl) return;
+
+            daysPL[day] += pl.dollars;
+        });
+
+        return daysPL;
+    }
+
+    plByDaySold(trades, plByTradeId) {
+        const daysPL = {
+            Monday: 0,
+            Tuesday: 0,
+            Wednesday: 0,
+            Thursday: 0,
+            Friday: 0
+        };
+
+        trades.forEach(t => {
+            const pl = plByTradeId.get(t.id);
+            if (!pl) return;
+
+            const highs = this.getFilteredHighs(t);
+            const selectedHigh = this.getHighestHighPrice(highs);
+
+            let day;
+            if (selectedHigh?.highDateTime) {
+                day = getDayName(selectedHigh.highDateTime);
+            } else {
+                day = getDayName(t.expireDateTime || t.tradeDateTime);
+            }
+
+            if (daysPL[day] !== undefined) {
+                daysPL[day] += pl.dollars;
+            }
+        });
+
+        return daysPL;
+    }
+
     calculateHighStats(highs, avgEntry) {
         if (!highs.length || !avgEntry) {
             return {
@@ -678,43 +770,260 @@ filterHighsByMinGain(highs, avgEntry, minGainPercent) {
         };
     }
 
-    getTradeViewModel(trade) {
-        const highlightHigh =
-            this.view.selectedSellPrice === "avg" ||
-                this.view.selectedSellPrice === "median"
-                ? null
-                : this.getHighestHighPrice(this.getFilteredHighs(trade));
+    renderDashboardLayout() {
+        this.mainDashboardCard.innerHTML = `
+        ${this.renderFiltersLayout()}
+        ${this.renderStatsLayout()}
+    `;
+    }
 
-        return {
-            trade,
-            pl: this.derived.plByTradeId.get(trade.id) || {
-                dollars: 0,
-                percent: 0
-            },
-            highlightHigh,
-            overrideHigh: trade.highOverrideId,
-            view: this.view
-        };
+    renderFiltersLayout() {
+        const tickers = [...new Set(this.tradesData.map(t => t.ticker))].sort();
+        const tickerOptions = tickers
+            .map(t => `<option value="${t}">${t}</option>`)
+            .join("");
+
+        return `
+        <div class="stats-card-top">
+            <div class="filters">
+                <div class="filters__row">
+                    <div class="filters__filter">
+                        <label>Sort By</label>
+                        <select id="sort-order" data-filter="sortOrder">
+                            <option value="newest">Newest → Oldest</option>
+                            <option value="oldest">Oldest → Newest</option>
+                        </select>
+                    </div>
+
+                    <div class="filters__filter">
+                        <label>Start Date</label>
+                        <input type="date" id="start-date" data-filter="startDate">
+                    </div>
+
+                    <div class="filters__filter">
+                        <label>End Date</label>
+                        <input type="date" id="end-date" data-filter="endDate">
+                    </div>
+                </div>
+
+                <div class="filters__row">
+                    <div class="filters__filter">
+                        <label>% Loss Modifier</label>
+                        <input
+                            type="number"
+                            id="percent-loss-modifier"
+                            step="0.01"
+                            data-filter="percentLossModifier"
+                        >
+                    </div>
+
+                    <div class="filters__filter">
+                        <label>Max Gain %</label>
+                        <input
+                            type="number"
+                            id="max-gain-percent-filter"
+                            step="0.01"
+                            data-filter="maxGainPercent"
+                        >
+                    </div>
+
+                    <div class="filters__filter">
+                        <label>Max Days Passed</label>
+                        <select
+                            id="max-days-passed-filter"
+                            data-filter="selectedMaxDaysPassed"
+                        ></select>
+                    </div>
+
+                    <div class="filters__filter">
+                        <label>Max High Time</label>
+                        <div class="filter-input-container">
+                            <input
+                                class="input--max-high-time"
+                                type="time"
+                                id="max-high-time"
+                                data-filter="maxHighTime"
+                            >
+                            <button
+                                class="button--max-high-time"
+                                type="button"
+                                id="reset-max-time"
+                            >
+                                ↺
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="filters__filter">
+                        <label>Sell Price</label>
+                        <select
+                            id="sell-price-select"
+                            data-filter="selectedSellPrice"
+                        ></select>
+                    </div>
+
+                    <div class="filters__filter">
+                        <label>Verified</label>
+                        <select id="verified-filter" data-filter="verified">
+                            <option value="all">All</option>
+                            <option value="verified">Verified</option>
+                            <option value="unverified">Unverified</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="filters__row">
+                    <div class="filters__filter">
+                        <label>Trade Type</label>
+                        <select
+                            id="trade-type-filter"
+                            multiple
+                            data-filter="tradeType"
+                        >
+                            <option value="swing">Swing</option>
+                            <option value="swing-day">Swing → Day</option>
+                            <option value="0dte">0DTE</option>
+                        </select>
+                    </div>
+
+                    <div class="filters__filter">
+                        <label>Day</label>
+                        <select id="day-filter" multiple data-filter="day">
+                            <option>Monday</option>
+                            <option>Tuesday</option>
+                            <option>Wednesday</option>
+                            <option>Thursday</option>
+                            <option>Friday</option>
+                        </select>
+                    </div>
+
+                    <div class="filters__filter">
+                        <label>Ticker</label>
+                        <select
+                            id="ticker-filter"
+                            multiple
+                            data-filter="ticker"
+                        >
+                            ${tickerOptions}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+    renderStatsLayout() {
+        return `
+        <div class="stats-card-bottom">
+            <div class="stat-totals"></div>
+            <div class="stats"></div>
+        </div>
+    `;
     }
 
 
-    renderStats() {
-        const vm = this.getStatsViewModel();
-        if (!vm) return;
+    initTemplates() {
+    this.templates = {
+        statTotals: this.renderStatTotalsTemplate,
+        stats: this.renderStatsTemplate,
+        tradeCard: this.renderTradeCardTemplate,
+        highItem: this.renderHighItem,
+        plByDay: this.renderPLByDay,
+        tradesByDay: this.renderTradesCountByDay
+    };
+}
 
-        const { statTotalsEl, statsEl } = this.el;
 
-        this.renderInto(statTotalsEl, renderStatTotalsTemplate, vm);
 
-        this.renderInto(statsEl, renderStatsTemplate, {
-            ...vm,
-            renderTradesCountByDay: this.renderTradesCountByDay.bind(this),
-            renderTradesWinLossByDay: this.renderTradesWinLossByDay.bind(this),
-            renderPLByDay: this.renderPLByDay.bind(this)
-        });
+renderStats() {
+    const { statTotalsEl, statsEl } = this.el;
+    if (!this.derived.summary) return;
+
+this.renderInto(statTotalsEl, "statTotals");
+this.renderInto(statsEl, "stats");
+
+}
+
+
+renderStatTotalsTemplate() {
+    const {
+        totalProfit,
+        totalPercent,
+        winRatio,
+        weightedWinRatio,
+        calls,
+        puts,
+        winTradeCount,
+        lossTradeCount
+    } = this.derived.summary;
+
+    const plClass = totalProfit >= 0 ? "profit-green" : "loss-red";
+    const winClass = winRatio >= 50 ? "profit-green" : "loss-red";
+    const weightedClass =
+        weightedWinRatio >= 50 ? "profit-green" : "loss-red";
+
+        return `
+        <div class="stat">
+            <span class="stat__title">TOTAL P/L:</span>
+            <span class="stat__value return ${plClass}">
+                ${totalProfit >= 0 ? "+" : "-"}$${Math.abs(totalProfit).toFixed(2)}
+                (${totalPercent >= 0 ? "+" : "-"}${Math.abs(totalPercent).toFixed(2)}%)
+            </span>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat">
+                <span class="stat__title">WIN RATIO: </span>
+                <span class="stat__value ${winClass}">
+                    ${winRatio.toFixed(2)}%
+                </span>
+            </div>
+
+            <div class="stat">
+                <span class="stat__title">WEIGHTED WIN RATIO: </span>
+                <span class="stat__value ${weightedClass}">
+                    ${weightedWinRatio.toFixed(2)}%
+                </span>
+            </div>
+        </div>
+
+        <div class="stat">
+            <span class="stat__title">Total Trades:</span>
+            <span class="stat__value">
+                <strong>${calls + puts}</strong>
+            </span>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat">
+                <span class="stat__title">Calls:</span>
+                <span class="stat__value"><strong>${calls}</strong></span>
+            </div>
+
+            <div class="stat">
+                <span class="stat__title">Puts:</span>
+                <span class="stat__value"><strong>${puts}</strong></span>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat">
+                <span class="stat__title">Wins:</span>
+                <span class="stat__value">
+                    <strong>${winTradeCount}</strong>
+                </span>
+            </div>
+
+            <div class="stat">
+                <span class="stat__title">Losses:</span>
+                <span class="stat__value">
+                    <strong>${lossTradeCount}</strong>
+                </span>
+            </div>
+        </div>
+    `;
     }
-
-
 
     renderPLByDay(plByObj) {
         return Object.entries(plByObj)
@@ -757,6 +1066,80 @@ filterHighsByMinGain(highs, avgEntry, minGainPercent) {
             .join(" ");
     }
 
+renderStatsTemplate() {
+    const summaryData = this.derived.summary;
+
+    if (!summaryData) return "";
+
+    const avgMs = summaryData.avgMs ? formatMs(summaryData.avgMs) : "—";
+    const avgHL = summaryData.avgHL ? formatMs(summaryData.avgHL) : "—";
+    const medianMs = summaryData.medianMs ? formatMs(summaryData.medianMs) : "—";
+    const medianHL = summaryData.medianHL ? formatMs(summaryData.medianHL) : "—";
+
+        return `
+        <div class="stats-row">
+            <div class="stat">
+                <span class="stat__title">Swing Trades:</span>
+                <span class="stat__value"><strong>${summaryData.swings}</strong></span>
+            </div>
+
+            <div class="stat">
+                <span class="stat__title">
+                    Swing Trades Completed as Day Trades:
+                </span>
+                <span class="stat__value"><strong>${summaryData.swingsDay}</strong></span>
+            </div>
+
+            <div class="stat">
+                <span class="stat__title">0DTE Trades:</span>
+                <span class="stat__value"><strong>${summaryData.zeroDTE}</strong></span>
+            </div>
+        </div>
+
+        <div class="stat">
+            <span class="stat__title">Avg Time Between High Prices:</span>
+            <span class="stat__value"><strong>${avgMs ?? "—"}</strong></span>
+        </div>
+
+        <div class="stat">
+            <span class="stat__title">
+                Avg Time Between Highest & Lowest Price:
+            </span>
+            <span class="stat__value"><strong>${avgHL ?? "—"}</strong></span>
+        </div>
+
+        <div class="stat">
+            <span class="stat__title">Median Time Between High Prices:</span>
+            <span class="stat__value"><strong>${medianMs ?? "—"}</strong></span>
+        </div>
+
+        <div class="stat">
+            <span class="stat__title">
+                Median Time Between Highest & Lowest Price:
+            </span>
+            <span class="stat__value"><strong>${medianHL ?? "—"}</strong></span>
+        </div>
+
+        <div class="dashboard-days">
+            Trades by Day: ${this.renderTradesCountByDay(summaryData.tradesByDay)}
+        </div>
+
+        <div class="dashboard-days">
+            Wins/Losses by Day: ${this.renderTradesWinLossByDay()}
+        </div>
+
+        <div class="dashboard-days">
+            P/L by Day (Day Bought):
+            ${this.renderPLByDay(summaryData.plByDayBought)}
+        </div>
+
+        <div class="dashboard-days">
+            P/L by Day (Day Sold):
+            ${this.renderPLByDay(summaryData.plByDaySold)}
+        </div>
+    `;
+    }
+
     renderAllTrades() {
         const html = this.tradesData
             .map(trade => this.tradeCardTemplate({ trade }))
@@ -779,28 +1162,268 @@ filterHighsByMinGain(highs, avgEntry, minGainPercent) {
         this.replaceWithTemplate(existing, this.tradeCardTemplate, { trade });
     }
 
-getHighExclusionState(trade, high) {
-    const {
-        maxGainPercent,
-        minGainPercent,
-        maxHighTime,
-        selectedMaxDaysPassed
-    } = this.view;
+    getHighExclusionState(trade, high) {
+        const {
+            maxHighTime,
+            selectedMaxDaysPassed,
+            maxGainPercent
+        } = this.view;
 
-    const percent = calculatePercentFromPrice(trade.avgEntry, high.price);
-    const highTime = high.highDateTime.toTimeString().slice(0, 5);
-    const daysPassed = high.daysPassed;
+        // ✅ use view slice
 
+        const percent = calculatePercentFromPrice(
+            trade.avgEntry,
+            high.price
+        );
+        const highTime = high.highDateTime.toTimeString().slice(0, 5);
+        const daysPassed = high.daysPassed;
+
+        return {
+            isAfterMaxGain:
+                Number.isFinite(maxGainPercent) && percent > maxGainPercent,
+            isAfterMaxTime:
+                maxHighTime != null && highTime > maxHighTime,
+            isAfterDaysPassed:
+                Number.isFinite(selectedMaxDaysPassed) &&
+                daysPassed > selectedMaxDaysPassed
+        };
+    }
+
+    renderHighItem({ trade, high, highlightHigh }) {
+        const percent = calculatePercentFromPrice(
+            trade.avgEntry,
+            high.price
+        );
+        const percentClass =
+            percent >= 0 ? "profit-green" : "loss-red";
+        const highDateStr = high.highDateTime
+            ? high.highDateTime.toISOString().split("T")[0]
+            : "—";
+
+        // Determine if this high is the forced/override high
+
+        const isOverrideHigh = trade.highOverrideId === high.id;
+
+        // Determine if this high is the normal highlight (highest) only if no override exists
+
+        const isHighlight =
+            !trade.highOverrideId &&
+            highlightHigh &&
+            high.id === highlightHigh.id;
+
+        // Compute exclusion state once
+
+        const exclusion = this.getHighExclusionState(trade, high);
+        const isExcluded =
+            !isHighlight &&
+            !isOverrideHigh &&
+            (
+                exclusion.isAfterMaxTime ||
+                exclusion.isAfterDaysPassed ||
+                exclusion.isAfterMaxGain
+            );
+
+        const isTreatAsLoss = trade.treatAsLoss;
+
+        const liClasses = [
+            isTreatAsLoss && "option-high--treat-as-loss",
+            isHighlight && "option-high--highest",
+            isOverrideHigh && "option-high--override",
+            isExcluded && "option-high--is-excluded"
+        ]
+            .filter(Boolean)
+            .join(" ");
+
+        return `
+        <li
+            class="option-high ${liClasses}"
+            data-high-datetime="${high.highDateTime.toISOString()}"
+            data-price="${high.price}"
+            data-high-id="${high.id}"
+        >
+            <span class="option-high__date-time">
+                ${highDateStr} ${formatTimeAMPM(high.highDateTime)}
+            </span>
+
+            <span class="option-high__price">
+                $${high.price.toFixed(2)}
+                <span
+                    class="option-high__gain-percent ${percentClass}"
+                >
+                    (${percent >= 0 ? "+" : "-"}${Math.abs(percent).toFixed(2)}%)
+                </span>
+            </span>
+        </li>
+    `;
+    }
+
+invokeTemplate(template, data) {
+    return template.call(this, data);
+}
+
+
+    getRenderContext() {
     return {
-        isAfterMaxGain: Number.isFinite(maxGainPercent) && percent > maxGainPercent,
-        isBelowMinGain: Number.isFinite(minGainPercent) && percent < minGainPercent, // ✅ added
-        isAfterMaxTime: maxHighTime != null && highTime > maxHighTime,
-        isAfterDaysPassed: Number.isFinite(selectedMaxDaysPassed) && daysPassed > selectedMaxDaysPassed
+        state: this.state,
+        view: this.view,
+        derived: this.derived
     };
 }
 
-    invokeTemplate(templateFn, data) {
-        return templateFn.call(this, data);
+
+
+   renderTradeCardTemplate(trade) {
+    const pl =
+        this.derived.plByTradeId.get(trade.id) ||
+        { dollars: 0, percent: 0 };
+
+    const highlightHigh = this.getHighestHighPrice(
+        this.getFilteredHighs(trade)
+    );
+
+    const overrideHigh = trade.highOverrideId;
+
+        const allHighs = [...trade.optionPriceHighs];
+        const plClass = pl.dollars >= 0 ? "profit-green" : "loss-red";
+        // Render highs list 
+
+        const renderHighs = () => allHighs.sort((a, b) => b.price - a.price).map(h => this.renderHighItem({ trade, high: h, highlightHigh, overrideHigh })).join("");
+        // Calculate filtered highs 
+
+        const filteredHighs = this.getFilteredHighs(trade);
+        // Render Avg/Median stats only if there are valid highs 
+
+        let highStatsHTML = ''; if (!trade.treatAsLoss && filteredHighs.length) {
+
+            const { avg, avgPercent, median, medianPercent } = this.calculateHighStats(filteredHighs, trade.avgEntry);
+            const avgPercentClass = avgPercent >= 0 ? "profit-green" : "loss-red";
+            const medianPercentClass = medianPercent >= 0 ? "profit-green" : "loss-red";
+            // Highlight only if no override high exists 
+            const highlightOverrideExists = !!trade.highOverrideId;
+            const avgHighlightClass =
+                !highlightOverrideExists && this.view.selectedSellPrice === "avg"
+                    ? "option-high--highest"
+                    : "";
+
+            const medianHighlightClass =
+                !highlightOverrideExists && this.view.selectedSellPrice === "median"
+                    ? "option-high--highest"
+                    : "";
+
+            highStatsHTML = `
+                <div class="option-high-stats">
+                    <div class="option-high-stats__stat ${avgHighlightClass}">
+                        <span class="option-high-stats__stat-title">
+                            Avg:
+                        </span>
+                        <span class="option-high-stats__stat-value">
+                            ${avg}
+                            <span class="option-high-stats__stat-percent ${avgPercentClass}">
+                                (${avgPercent >= 0 ? "+" : "-"}${Math.abs(avgPercent)}%)
+                            </span>
+                        </span>
+                    </div>
+                    <div class="option-high-stats__stat ${medianHighlightClass}">
+                        <span class="option-high-stats__stat-title">
+                            Median:
+                        </span>
+                        <span class="option-high-stats__stat-value">
+                            ${median}
+                            <span class="option-high-stats__stat-percent ${medianPercentClass}">
+                                (${medianPercent >= 0 ? "+" : "-"}${Math.abs(medianPercent)}%)
+                            </span>
+                        </span>
+                    </div>
+                </div>`;
+        }
+
+        return `
+        <div class="option-card dashboard-card ${trade.excluded ? 'option-card--is-excluded' : ''} ${trade.treatAsLoss ? 'option-card--treat-as-loss' : ''}" data-trade-id="${trade.id}">
+            <div class="option-card__btns">
+                <button
+                    class="option-card-btn option-card-btn--loss ${trade.treatAsLoss ? 'is-active' : ''}">
+                    −
+                </button>
+                <button
+                    class="option-card-btn option-card-btn--hide ${trade.excluded ? 'is-active' : ''}">
+                    👁
+                </button>
+                <button class="option-card-btn option-card-btn--delete">
+                    &times;
+                </button>
+            </div>
+            <div class="option-card__trade-info">
+                <div class="option-trade-date">
+                    <span>
+                        ${trade.tradeDateTime.toLocaleDateString()} ${formatTimeAMPM(trade.tradeDateTime)}
+                    </span>
+                </div>
+                <div class="option-info">
+                    <span class="option-info__ticker">
+                        ${trade.ticker}
+                    </span>
+                    <span class="option-info__strike">
+                        ${trade.strikePrice}
+                    </span>
+                    <span>
+                        @
+                    </span>
+                    <span class="option-info__avg-entry">
+                        ${trade.avgEntry.toFixed(2)}
+                    </span>
+                    <br>
+                        <span class="option-info__expiry">
+                            Exp: ${trade.expireDateTime.toLocaleDateString()}
+                        </span>
+                        <div class="option-info__type option-info__type--${trade.optionType}">
+                            <span>
+                                ${trade.optionType.toUpperCase()}
+                            </span>
+                        </div>
+                </div>
+            </div>
+            <div class="option-card__image-gallery">
+                ${trade.images && trade.images.length
+                ? `<div class="image-grid">
+                ${trade.images.slice(0, 9).map(url => `
+                    <div class="image-grid__item" data-image-url="${url}">
+                        <a href="${url}" target="_blank" rel="noopener noreferrer">
+                            <img src="${url}" width="64" height="64" alt="Trade Image">
+                        </a>
+                        <button type="button" class="image-grid__delete-btn">&times;</button>
+                    </div>`).join('')}
+               </div>`
+                : ''
+            }
+                <div class="option-card__upload-btn-container">
+                    <input type="file" accept="image/*" class="option-card__upload-input" style="display:none">
+                        <button type="button" class="option-card-btn option-card-btn--upload">Upload Image</button>
+                </div>
+            </div>
+
+            <div class="option-card__price-highs">
+                <hr>
+                    <ul class="option-highs-list">
+                        ${renderHighs()}
+                    </ul>
+                    ${highStatsHTML}
+            </div>
+            <div class="option-high-form">
+                <div class="option-high-form__inputs">
+                    <input type="date" class="option-high-form__date" value="2025-07-02">
+                        <input type="time" class="option-high-form__time">
+                            <input type="number" class="option-high-form__price" placeholder="Price" step="0.01">
+                                <button type="button" class="option-high-form__add-btn">+</button>
+                            </div>
+                        </div>
+                        <hr>
+                            <div class="option-card__pl">
+                                <span>P/L:</span>
+                                <span class="option-card__total-return ${plClass}">
+                                    ${pl.dollars >= 0 ? "+" : "-"}$${Math.abs(pl.dollars).toFixed(2)} (${pl.percent >= 0 ? "+" : "-"}${Math.abs(pl.percent).toFixed(2)}%)
+                                </span>
+                            </div>
+                        </div>`;
     }
 
 
@@ -1086,7 +1709,7 @@ getHighExclusionState(trade, high) {
 
                 this.derived = this.recomputeDerivedState();
                 this.updateAllDynamicFilters();
-                this.render(["allStats", "allTrades"]);
+                this.render({ stats: true, trades: true });
             })
             .catch(err =>
                 console.error("Error deleting trade:", err)
@@ -1104,7 +1727,7 @@ getHighExclusionState(trade, high) {
 
         this.derived = this.recomputeDerivedState();
         this.updateAllDynamicFilters();
-        this.render(["allStats", "allTrades"]);
+        this.render({ stats: true, trades: true });
     }
 
     handleToggleExcluded(trade) {
@@ -1118,8 +1741,11 @@ getHighExclusionState(trade, high) {
 
         this.derived = this.recomputeDerivedState();
         this.updateAllDynamicFilters();
-        this.render(["allStats", "trade"], { tradeId: trade.id });
-
+        this.render({
+            stats: true,
+            trades: true,
+            tradeIds: [trade.id]
+        });
     }
 
 
@@ -1172,8 +1798,11 @@ getHighExclusionState(trade, high) {
 
                 this.derived = this.recomputeDerivedState();
                 this.updateAllDynamicFilters();
-                this.render(["allStats", "trade"], { tradeId: trade.id });
-
+                this.render({
+                    stats: true,
+                    trades: true,
+                    tradeIds: [trade.id]
+                });
             })
             .catch(err => {
                 console.error("Error adding high:", err);
@@ -1195,7 +1824,11 @@ getHighExclusionState(trade, high) {
         });
 
         this.derived = this.recomputeDerivedState();
-        this.render(["allStats", "trade"], { tradeId: trade.id });
+        this.render({
+            stats: true,
+            trades: true,
+            tradeIds: [trade.id]
+        });
     }
 
     async handleImageFileSelected(fileInput, trade) {
@@ -1220,7 +1853,11 @@ getHighExclusionState(trade, high) {
 
             this.derived = this.recomputeDerivedState();
             this.updateAllDynamicFilters();
-            this.render("trade", { tradeId: trade.id });
+
+            this.render({
+                trades: true,
+                tradeIds: [trade.id]
+            });
 
         } catch (err) {
             console.error("Error uploading image:", err);
@@ -1265,29 +1902,18 @@ getHighExclusionState(trade, high) {
         }
     }
 
-    renderInto(el, templateFn, data) {
-        if (!el) return;
-        el.innerHTML = this.invokeTemplate(templateFn, data);
-        ;
+renderInto(el, template, data) {
+    const templateFn =
+        typeof template === "string"
+            ? this.templates[template]
+            : template;
+
+    if (!templateFn) {
+        console.warn("Missing template:", template);
+        return;
     }
 
-getStatsViewModel() {
-    const stats = this.derived.summary;
-    if (!stats) return null;
-
-    return {
-        ...stats,
-
-        avgProfitPerTradeFormatted: stats.avgProfitPerTrade.toFixed(2),
-        medianProfitPerTradeFormatted: stats.medianProfitPerTrade.toFixed(2),
-        avgProfitPerTradePercentFormatted: stats.avgProfitPerTradePercent.toFixed(2),
-        medianProfitPerTradePercentFormatted: stats.medianProfitPerTradePercent.toFixed(2),
-
-        avgMs: stats.avgMs ? formatMs(stats.avgMs) : null,
-        avgHL: stats.avgHL ? formatMs(stats.avgHL) : null,
-        medianMs: stats.medianMs ? formatMs(stats.medianMs) : null,
-        medianHL: stats.medianHL ? formatMs(stats.medianHL) : null
-    };
+    el.innerHTML = this.invokeTemplate(templateFn, data);
 }
 
 
@@ -1303,17 +1929,9 @@ getStatsViewModel() {
         existingEl.replaceWith(next);
     }
 
-    tradeCardTemplate = ({ trade }) => {
-        const vm = this.getTradeViewModel(trade);
-
-        return renderTradeCardTemplate({
-            ...vm,
-            view: this.view,
-            getFilteredHighs: this.getFilteredHighs.bind(this),
-            calculateHighStats: this.calculateHighStats.bind(this),
-            getHighExclusionState: this.getHighExclusionState.bind(this)
-        });
-    };
+tradeCardTemplate = ({ trade }) => {
+    return this.renderTradeCardTemplate(trade);
+};
 
 
     bindTradeCardEvents() {

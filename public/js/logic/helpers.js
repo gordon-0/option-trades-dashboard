@@ -64,3 +64,32 @@ export function calculateMedian(arr) {
 export function calculatePercentFromPrice(avgEntry, price) {
     return ((price - avgEntry) / avgEntry) * 100;
 }
+
+export function formatPL({
+    dollars = null,
+    percent = null,
+    decimals = 2,
+    zeroClass = "profit-green"
+} = {}) {
+    const valueForClass = dollars ?? percent ?? 0;
+
+    const plClass =
+        valueForClass > 0
+            ? "profit-green"
+            : valueForClass < 0
+                ? "loss-red"
+                : zeroClass;
+
+    const formatValue = v =>
+        v == null
+            ? null
+            : `${v >= 0 ? "+" : "-"}${Math.abs(v).toFixed(decimals)}`;
+
+    return {
+        dollars: dollars != null ? `${dollars >= 0 ? "+" : "-"}$${Math.abs(dollars).toFixed(decimals)}` : null,
+        percent: percent != null ? `(${formatValue(percent)}%)` : null,
+        plClass
+    };
+}
+
+

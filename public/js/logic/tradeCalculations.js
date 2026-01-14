@@ -1,157 +1,199 @@
-// src/helpers/tradeCalculations.js
-import { getDayName, calculateAverage, calculateMedian, calculatePercentFromPrice } from "./helpers.js"; // existing helper functions
+import {
+    getDayName,
+    calculateAverage,
+    calculateMedian
+} from "./helpers.js";
 
-/**
- * Filter trades by date
- */
-export function filterByDate(trade, startDate, endDate) {
-    if (!trade.tradeDateTime) return false;
+/* -------------------------
+   Totals / Outcomes
+-------------------------- */
 
-    const tradeDay = trade.tradeDateTime;
-    const tradeUTCYear = tradeDay.getUTCFullYear();
-    const tradeUTCMonth = tradeDay.getUTCMonth();
-    const tradeUTCDate = tradeDay.getUTCDate();
-    const normalizedTradeDayUTC = new Date(Date.UTC(tradeUTCYear, tradeUTCMonth, tradeUTCDate));
+export function calculateTradeTotals(trades, plByTradeId) {
+    let profit = 0;
+    let cost = 0;
 
-    const startUTC = startDate
-        ? new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()))
-        : null;
-
-    const endUTC = endDate
-        ? new Date(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate()))
-        : null;
-
-    return (!startUTC || normalizedTradeDayUTC >= startUTC) &&
-           (!endUTC || normalizedTradeDayUTC <= endUTC);
-}
-
-/**
- * Filter trades by day of week
- */
-export function filterByDay(trade, selectedDays) {
-    if (!selectedDays.length) return true;
-    const dayName = getDayName(trade.tradeDateTime);
-    return selectedDays.includes(dayName);
-}
-
-/**
- * Filter trades by ticker
- */
-export function filterByTicker(trade, selectedTickers) {
-    if (!selectedTickers.length) return true;
-    return selectedTickers.includes(trade.ticker);
-}
-
-/**
- * Filter trades by verification status
- */
-export function filterByVerified(trade, verified) {
-    if (verified === "all") return true;
-    if (verified === "verified") return trade.verified;
-    if (verified === "unverified") return !trade.verified;
-    return true;
-}
-
-/**
- * Filter trades by trade type
- */
-export function filterByTradeType(trade, selectedTradeTypes, getTradeTypesFn) {
-    if (!selectedTradeTypes.length) return true;
-    const tradeTypes = getTradeTypesFn(trade);
-    return selectedTradeTypes.some(type => tradeTypes.includes(type));
-}
-
-/**
- * Calculate P/L for a trade
- */
-export function calculatePL(trade, state, getHighestHighPriceFn, getFilteredHighsFn) {
-    if (trade.treatAsLoss) return { dollars: -trade.avgEntry * 100, percent: -100 };
-
-    let high;
-    if (trade.highOverrideId) {
-        high = trade.optionPriceHighs.find(h => h.id === trade.highOverrideId);
+    for (const trade of trades) {
+        const { dollars } = plByTradeId.get(trade.id);
+        profit += dollars;
+        cost += trade.avgEntry * 100;
     }
 
-    if (!high) {
-        high = getHighestHighPriceFn(getFilteredHighsFn(trade));
-    }
-
-    if (!high) {
-        const lossPercent = -state.percentLossModifier;
-        const dollars = (lossPercent / 100) * trade.avgEntry * 100;
-        return { dollars, percent: lossPercent };
-    }
-
-    const dollars = (high.price - trade.avgEntry) * 100;
-    const percent = ((high.price - trade.avgEntry) / trade.avgEntry) * 100;
-
-    return { dollars, percent };
+    return {
+        profit,
+        cost,
+        percent: cost ? (profit / cost) * 100 : 0
+    };
 }
 
-/**
- * Count trades by day
- */
-export function countTradesByDay(trades, getDayNameFn = getDayName) {
-    const days = { Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0 };
+export function calculateTradeOutcomes(trades, plByTradeId) {
+    let wins = 0;
+    let losses = 0;
+
+    for (const trade of trades) {
+        const { dollars } = plByTradeId.get(trade.id);
+        if (!trade.treatAsLoss && dollars > 0) wins++;
+        else losses++;
+    }
+
+    return { wins, losses };
+}
+
+/* -------------------------
+   Composition
+-------------------------- */
+
+export function calculateTradeComposition(trades, isSwingDayTrade) {
+    let calls = 0;
+    let puts = 0;
+    let swings = 0;
+    let swingsDay = 0;
+    let zeroDTE = 0;
+
+    for (const trade of trades) {
+        const isSameDay =
+            trade.tradeDateTime?.toDateString() ===
+            trade.expireDateTime?.toDateString();
+
+        if (trade.optionType === "call") calls++;
+        if (trade.optionType === "put") puts++;
+
+        if (isSameDay) {
+            zeroDTE++;
+        } else {
+            swings++;
+            if (!trade.treatAsLoss && isSwingDayTrade(trade)) {
+                swingsDay++;
+            }
+        }
+    }
+
+    return { calls, puts, swings, swingsDay, zeroDTE };
+}
+
+/* -------------------------
+   Day-based metrics
+-------------------------- */
+
+export function countWinsLossesByDay(trades, plByTradeId) {
+    const days = {
+        Monday: { wins: 0, losses: 0 },
+        Tuesday: { wins: 0, losses: 0 },
+        Wednesday: { wins: 0, losses: 0 },
+        Thursday: { wins: 0, losses: 0 },
+        Friday: { wins: 0, losses: 0 }
+    };
+
     trades.forEach(t => {
-        const day = getDayNameFn(t.tradeDateTime);
-        if (days[day] !== undefined) days[day]++;
-    });
-    return days;
-}
-
-/**
- * Count wins/losses by day
- */
-export function countWinsLossesByDay(trades, plByTradeId, getDayNameFn = getDayName) {
-    const days = { Monday: { wins: 0, losses: 0 }, Tuesday: { wins: 0, losses: 0 }, Wednesday: { wins: 0, losses: 0 }, Thursday: { wins: 0, losses: 0 }, Friday: { wins: 0, losses: 0 } };
-    trades.forEach(t => {
-        const day = getDayNameFn(t.tradeDateTime);
+        const day = getDayName(t.tradeDateTime);
         if (!days[day]) return;
 
         const { dollars } = plByTradeId.get(t.id);
-
         if (!t.treatAsLoss && dollars > 0) {
             days[day].wins++;
         } else {
             days[day].losses++;
         }
     });
+
     return days;
 }
 
-/**
- * Calculate option high time differences
- */
-export function getOptionHighTimeDiffs(trades, getFilteredHighsFn) {
-    return trades.reduce(
-        (acc, trade) => {
-            const highs = getFilteredHighsFn(trade);
-            if (highs.length < 2) return acc;
+export function countTradesByDay(trades) {
+    const days = {
+        Monday: 0,
+        Tuesday: 0,
+        Wednesday: 0,
+        Thursday: 0,
+        Friday: 0
+    };
 
-            const chronTimes = highs.map(h => h.highDateTime).sort((a, b) => a - b);
+    trades.forEach(t => {
+        const day = getDayName(t.tradeDateTime);
+        if (days[day] !== undefined) days[day]++;
+    });
 
-            for (let i = 1; i < chronTimes.length; i++) {
-                acc.high.push(Math.abs(chronTimes[i] - chronTimes[i - 1]));
-            }
-
-            const [max, min] = [...highs].sort((a, b) => b.price - a.price).slice(0, 2).map(h => h.highDateTime);
-            if (max && min) acc.highLow.push(Math.abs(max - min));
-
-            return acc;
-        },
-        { high: [], highLow: [] }
-    );
+    return days;
 }
 
-/**
- * Calculate average/median times
- */
-export function calculateOptionHighTimeStats(trades, getFilteredHighsFn) {
-    const { high, highLow } = getOptionHighTimeDiffs(trades, getFilteredHighsFn);
-
-    return {
-        high: { avg: calculateAverage(high), median: calculateMedian(high) },
-        highLow: { avg: calculateAverage(highLow), median: calculateMedian(highLow) }
+export function calcPlByDayBought(trades, plByTradeId) {
+    const daysPL = {
+        Monday: 0,
+        Tuesday: 0,
+        Wednesday: 0,
+        Thursday: 0,
+        Friday: 0
     };
+
+    trades.forEach(t => {
+        const day = getDayName(t.tradeDateTime);
+        if (daysPL[day] === undefined) return;
+
+        const pl = plByTradeId.get(t.id);
+        if (!pl) return;
+
+        daysPL[day] += pl.dollars;
+    });
+
+    return daysPL;
+}
+
+export function calcPlByDaySold(trades, plByTradeId, getFilteredHighs, getHighestHighPrice) {
+    const daysPL = {
+        Monday: 0,
+        Tuesday: 0,
+        Wednesday: 0,
+        Thursday: 0,
+        Friday: 0
+    };
+
+    trades.forEach(t => {
+        const pl = plByTradeId.get(t.id);
+        if (!pl) return;
+
+        const highs = getFilteredHighs(t);
+        const selectedHigh = getHighestHighPrice(highs);
+
+        const day = selectedHigh?.highDateTime
+            ? getDayName(selectedHigh.highDateTime)
+            : getDayName(t.expireDateTime || t.tradeDateTime);
+
+        if (daysPL[day] !== undefined) {
+            daysPL[day] += pl.dollars;
+        }
+    });
+
+    return daysPL;
+}
+
+/* -------------------------
+   Win ratios
+-------------------------- */
+
+export function calculateWinRatios(metrics, plByTradeId) {
+    const { winLossByDay } = metrics;
+
+    const { wins, losses } = Object.values(winLossByDay).reduce(
+        (acc, d) => ({
+            wins: acc.wins + d.wins,
+            losses: acc.losses + d.losses
+        }),
+        { wins: 0, losses: 0 }
+    );
+
+    const totalTrades = wins + losses;
+    const winRatio = totalTrades ? (wins / totalTrades) * 100 : 0;
+
+    let totalAbsPL = 0;
+    let positivePL = 0;
+
+    plByTradeId.forEach(({ dollars }) => {
+        totalAbsPL += Math.abs(dollars);
+        if (dollars > 0) positivePL += dollars;
+    });
+
+    const weightedWinRatio = totalAbsPL
+        ? (positivePL / totalAbsPL) * 100
+        : 0;
+
+    return { winRatio, weightedWinRatio };
 }
