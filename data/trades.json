@@ -6304,6 +6304,11 @@
         "id": "a4c4f61b-38d4-41af-92a9-a2760d6f2b88",
         "high_datetime": "2025-06-26T14:00:00.000Z",
         "price": 4.65
+      },
+      {
+        "id": "932363f9-281d-4f4f-b68c-4d0e173b1645",
+        "high_datetime": "2025-06-26T13:57:00.000Z",
+        "price": 3.8
       }
     ],
     "trader": "@TheMarketRaven",
@@ -6332,5 +6337,203 @@
     "high_override_id": null,
     "excluded": false,
     "treat_as_loss": false
+  },
+  {
+    "id": "ba0774e6-8651-4120-b2e5-ed3a30780361",
+    "option_price_highs": [
+      {
+        "id": "0809f182-870c-4c37-b866-3eb88bbff5b9",
+        "high_datetime": "2025-06-25T17:12:00.000Z",
+        "price": 6.35
+      },
+      {
+        "id": "b9fa6611-47e3-4355-b1d9-cabe7974882d",
+        "high_datetime": "2025-06-25T13:34:00.000Z",
+        "price": 3.7
+      },
+      {
+        "id": "f3b8b7b9-54b3-47f2-bdb5-93bc5fdf8352",
+        "high_datetime": "2025-06-24T19:54:00.000Z",
+        "price": 2.15
+      },
+      {
+        "id": "959c41cd-39df-46f7-b5e9-affc96fd96b3",
+        "high_datetime": "2025-06-24T13:46:00.000Z",
+        "price": 2.28
+      },
+      {
+        "id": "42f52b98-319c-4752-834d-7e3a9dc9c776",
+        "high_datetime": "2025-06-24T17:50:00.000Z",
+        "price": 1.94
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "NVDA",
+    "average_entry": 1.74,
+    "strike_price": 147,
+    "option_type": "call",
+    "trade_datetime": "2025-06-24T13:42:00.000Z",
+    "expire_datetime": "2025-06-27T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-06-24_0842AM_NVDA_147_1-74_C_20260114001803.png"
+    ]
+  },
+  {
+    "id": "e99e5ef6-29bf-4217-a81a-bcd3baad65e6",
+    "option_price_highs": [
+      {
+        "id": "41d480eb-754e-4eac-908d-aff31cd685ec",
+        "high_datetime": "2025-06-25T14:46:00.000Z",
+        "price": 2.1
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPX",
+    "average_entry": 1.5,
+    "strike_price": 6125,
+    "option_type": "call",
+    "trade_datetime": "2025-06-25T14:41:00.000Z",
+    "expire_datetime": "2025-06-25T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false
+  },
+  {
+    "id": "c6f971b2-f1fa-4aa6-89ea-7a2be0d0d7a6",
+    "option_price_highs": [
+      {
+        "id": "a23f78ee-01d0-4ac5-9e95-8b400ec798fc",
+        "high_datetime": "2025-06-25T13:31:00.000Z",
+        "price": 17.81
+      },
+      {
+        "id": "5cf4220c-eabb-4254-a629-14cee1e691de",
+        "high_datetime": "2025-06-24T13:35:00.000Z",
+        "price": 15.5
+      },
+      {
+        "id": "07b9ef7d-15db-459b-8116-8db33e289536",
+        "high_datetime": "2025-06-23T17:42:00.000Z",
+        "price": 6.5
+      },
+      {
+        "id": "fa0751f8-8da7-4c6e-a272-8e6089b383dd",
+        "high_datetime": "2025-06-23T15:09:00.000Z",
+        "price": 5.5
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "META",
+    "average_entry": 4.02,
+    "strike_price": 700,
+    "option_type": "call",
+    "trade_datetime": "2025-06-23T14:28:00.000Z",
+    "expire_datetime": "2025-06-27T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-06-23_0928AM_META_700_4-02_C_20260114002457.png"
+    ]
+  },
+  {
+    "id": "624f52cb-641e-42ca-acae-56068efba443",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "TSLA",
+    "average_entry": 4.95,
+    "strike_price": 350,
+    "option_type": "call",
+    "trade_datetime": "2025-06-24T19:00:00.000Z",
+    "expire_datetime": "2025-06-27T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-06-24_0200PM_TSLA_350_4-95_C_20260114001838.png"
+    ]
+  },
+  {
+    "id": "ff8b3e48-6253-4528-83c6-22fd92bc6732",
+    "option_price_highs": [
+      {
+        "id": "de0d2e10-423b-4bc1-ac46-2c1f4b99fdff",
+        "high_datetime": "2025-06-23T16:28:00.000Z",
+        "price": 5.63
+      },
+      {
+        "id": "1b88ef7e-1b92-4533-9979-3e930bf520fc",
+        "high_datetime": "2025-06-23T16:02:00.000Z",
+        "price": 4.54
+      },
+      {
+        "id": "1eb6ea7b-a35f-479c-ba5b-d0c1b55567e9",
+        "high_datetime": "2025-06-23T16:39:00.000Z",
+        "price": 6.82
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "SPY",
+    "average_entry": 3.84,
+    "strike_price": 596,
+    "option_type": "put",
+    "trade_datetime": "2025-06-23T15:27:00.000Z",
+    "expire_datetime": "2025-06-27T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-06-23_1027AM_SPY_596_3-84_P_20260114002556.png"
+    ]
+  },
+  {
+    "id": "d63b422c-e9c3-4391-81b3-e1f99ca006ac",
+    "option_price_highs": [],
+    "trader": "@TheMarketRaven",
+    "ticker": "AAPL",
+    "average_entry": 2.18,
+    "strike_price": 202.5,
+    "option_type": "call",
+    "trade_datetime": "2025-06-23T14:09:00.000Z",
+    "expire_datetime": "2025-06-27T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-06-23_0909AM_AAPL_202.5_2-18_C_20260114002428.png"
+    ]
+  },
+  {
+    "id": "ab79bc27-6cdf-489a-aff6-239ff34bfb64",
+    "option_price_highs": [
+      {
+        "id": "d1a7165f-354e-4f7c-960f-b3be6aed98c6",
+        "high_datetime": "2025-06-20T13:31:00.000Z",
+        "price": 10.5
+      }
+    ],
+    "trader": "@TheMarketRaven",
+    "ticker": "COIN",
+    "average_entry": 4.4,
+    "strike_price": 300,
+    "option_type": "call",
+    "trade_datetime": "2025-06-18T18:24:00.000Z",
+    "expire_datetime": "2025-06-20T12:00:00.000Z",
+    "verified": false,
+    "high_override_id": null,
+    "excluded": false,
+    "treat_as_loss": false,
+    "images": [
+      "/uploads/2025-06-18_0124PM_COIN_300_4-4_C_20260114003148.png"
+    ]
   }
 ]

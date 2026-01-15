@@ -210,7 +210,7 @@ export function renderTradeCardTemplate({
             </div>
             <div class="option-high-form">
                 <div class="option-high-form__inputs">
-                    <input type="date" class="option-high-form__date" value="2025-06-26">
+                    <input type="date" class="option-high-form__date" value="2025-06-20">
                         <input type="time" class="option-high-form__time">
                             <input type="number" class="option-high-form__price" placeholder="Price" step="0.01">
                                 <button type="button" class="option-high-form__add-btn">+</button>
